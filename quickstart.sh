@@ -26,4 +26,4 @@ echo "  HostName localhost"
 echo "  User bibi"
 echo "  Port 3022"
 echo
-echo "Then, use `ssh bibivm` to connect"
+echo "Then, use \`ssh bibivm\` to connect"
