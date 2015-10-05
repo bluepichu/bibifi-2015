@@ -12,6 +12,13 @@ Return truthy value for successful operation (possibly contents of keycard)
 
 class BaseBank(metaclass=ABCMeta):
     '''
+        Rolls back the most recent transaction for the account. Only needs to store one transaction
+    '''
+    @abstractmethod
+    def rollback(self, name):
+        pass
+
+    '''
     Returns keycard contents to be saved
     '''
     @abstractmethod
