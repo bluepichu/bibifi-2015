@@ -2,15 +2,28 @@ import struct
 from Crypto.Hash import SHA512
 from Crypto.Signature import PKCS1_PSS
 
+def read_packet(sock):
+    data = bytearray(4096)
+    data_view = memoryview(data)
+    count = 0
+    while count < 4:
+        count += sock.recv_into(data_view[count:])
+    outer_size = struct.unpack('>I', data[:4])
+    if outer_size > 4096:
+        raise IOError('Packet too big')
+    while count < outer_size:
+        count += sock.recv_into(data_view[count:])
+    return ReadPacket(bytes(data_view[:count]))
+
 class ReadPacket:
     def __init__(self, data):
-        if len(data) < 4:
+        if len(data) < 8:
             raise IOError('Packet too small')
-        self.inner_size, = struct.unpack('>I', data[:4])
-        if inner_size > len(data)-4:
+        self.outer_size, self.inner_size = struct.unpack('>II', data[:8])
+        if inner_size > len(data)-8 or outer_size != len(data):
             raise IOError('Invalid packet size')
-        self.data = data[4:self.inner_size+4]
-        self.signature = data[self.inner_size+4:]
+        self.data = data[8:self.inner_size+8]
+        self.signature = data[self.inner_size+8:]
         self.ptr = 0
 
     def read(self, count):
@@ -85,4 +98,4 @@ class WritePacket:
         signer = PKCS1_PSS.new(key)
         sig = signer.sign(h)
 
-        return presign + sig
+        return struct.pack('>I', len(presign)+len(sig)+4) + presign + sig
