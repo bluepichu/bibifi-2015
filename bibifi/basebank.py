@@ -12,29 +12,36 @@ Return truthy value for successful operation (possibly contents of keycard)
 
 class BaseBank(metaclass=ABCMeta):
     '''
+        Rolls back the most recent transaction for the account. Only needs to store one transaction
+    '''
+    @abstractmethod
+    def rollback(self, name):
+        pass
+
+    '''
     Returns keycard contents to be saved
     '''
     @abstractmethod
-    def create_account(name):
+    def create_account(self, name, balance):
         pass
 
     '''
     Returns True on success
     '''
     @abstractmethod
-    def deposit(name, keycard, amount):
+    def deposit(self, name, keycard, amount):
         pass
 
     '''
     Return True on success
     '''
     @abstractmethod
-    def withdraw(name, keycard, amount):
+    def withdraw(self, name, keycard, amount):
         pass
 
     '''
     Returns balance (Currency) on success
     '''
     @abstractmethod
-    def check_balance(name, keycard):
+    def check_balance(self, name, keycard):
         pass
