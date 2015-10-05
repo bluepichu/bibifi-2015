@@ -1,4 +1,4 @@
-from ..net.protocol import CreateAccount, Withdraw, Deposit, CheckBalance
+from bibifi.net.protocol import CreateAccount, Withdraw, Deposit, CheckBalance
 
 import zmq
 import os.path

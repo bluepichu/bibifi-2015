@@ -1,2 +1,2 @@
-click==5.1
+PyCrypto==2.6.1
 wheel==0.24.0

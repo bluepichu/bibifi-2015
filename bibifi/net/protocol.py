@@ -4,9 +4,6 @@ from .util import generate_nonce
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Hash import SHA512, SHA
 
-methods = [None, CreateAccount(), Deposit(), Withdraw(), CheckBalance()]
-method_types = dict((x.name, i) for i, x in enumerate(methods))
-
 class ProtocolMethod:
     def make_packet(self):
         p = WritePacket()
@@ -164,3 +161,6 @@ def CheckBalance(ProtocolMethod):
         r.assert_at_end()
 
         return balance
+
+methods = [None, CreateAccount(), Deposit(), Withdraw(), CheckBalance()]
+method_types = dict((x.name, i) for i, x in enumerate(methods))
