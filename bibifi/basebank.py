@@ -15,7 +15,7 @@ class BaseBank(metaclass=ABCMeta):
     Returns keycard contents to be saved
     '''
     @abstractmethod
-    def create_account(self, name):
+    def create_account(self, name, balance):
         pass
 
     '''
