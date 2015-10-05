@@ -1,31 +1,21 @@
 from bibifi.net.protocol import CreateAccount, Withdraw, Deposit, CheckBalance
-
-import zmq
+from bibifi.net.packet import read_packet
+from socket import socket
 import os.path
 import sys
 
 class ProtocolBank(BaseBank):
-    def __init__(self, addr, port, keys):
-        self.ctx = zmq.Context.instance()
-        self.sock = ctx.socket(zmq.REQ)
-        self.sock.setsockopt(zmq.RCVTIMEO, 10000)
-        self.sock.connect('tcp://%s:%d:'%(addr, port))
-
+    def __init__(self, host, port, keys):
+        self.sock = socket()
+        self.sock.create_connection((host, port))
+        self.sock.settimeout(10)
         self.keys = keys
 
     def process_request(self, handler, *args):
         s = handler.send_req(*args)
-        to_send = s.finish()
-        tracker = self.sock.send(to_send, track=True)
-        if not util.check_for_timeout(tracker):
-            raise IOError('Send timed out')
-
-        try:
-            r = ReadPacket(self.sock.recv())
-        except zmq.ZMQError as e:
-            raise IOError('Recv timed out')
+        self.sock.sendall(s.finish())
+        r = read_packet(self.sock)
         r.verify_or_raise()
-
         return handler.recv_res(s, r, self.keys)
 
     def create_account(self, name, balance):
