@@ -16,5 +16,6 @@ def check_balance():
 def print_error(*objs):
     print("WARNING: ", *objs, file=sys.stderr)
 
+
 if __name__ == "__main__":
 	main()
