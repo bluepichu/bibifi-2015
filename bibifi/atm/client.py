@@ -27,11 +27,10 @@ def main():
 	if not args.c:
 		args.c = args.a + ".card"
 
-	validation.validate_bank_auth_file(args.s)
-	validation.validate_ip(args.i)
-	validation.validate_port(args.p)
-	validation.validate_card_file(args.c)
-	validation.validate_name(args.a)
+	if not validation.validate_bank_auth_file(args.s) or not validation.validate_ip(args.i) or not validation.validate_port(args.p) or not validation.validate_card_file(args.c) or not validation.validate_name(args.a):
+		print_error("Invalid input.")
+		print_error("Exiting with code 255...")
+		exit(255)
 
 	bank = ProtocolBank(args.i, args.p, args.s)
 
