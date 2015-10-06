@@ -30,10 +30,10 @@ def validate_bank_auth_file(file):
 	# More things probably go here...
 	return True
 
-def validate_card_file(file):
+def validate_card_file(file, exists=True):
 	if not validate_file(file):
 		return False
-	if not os.path.isfile(file):
+	if os.path.isfile(file) != exists:
 		return False
 	# More things probably go here...
 	return True

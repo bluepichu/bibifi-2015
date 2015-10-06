@@ -75,7 +75,7 @@ class CreateAccount(ProtocolMethod):
 
         return keycard
 
-def Transaction(ProtocolMethod):
+class Transaction(ProtocolMethod):
     def send_req(self, name, keycard, amount):
         s = self.make_packet()
         s.write_bytes(name)
@@ -109,19 +109,19 @@ def Transaction(ProtocolMethod):
 
         return bool(success)
 
-def Deposit(Transaction):
+class Deposit(Transaction):
     name = 'deposit'
 
     def handle_bank(self, bank, *args):
         bank.deposit(*args)
 
-def Withdraw(Transaction):
+class Withdraw(Transaction):
     name = 'withdraw'
 
     def handle_bank(self, bank, *args):
         bank.withdraw(*args)
 
-def CheckBalance(ProtocolMethod):
+class CheckBalance(ProtocolMethod):
     name = 'check_balance'
 
     def send_req(self, name, keycard):
