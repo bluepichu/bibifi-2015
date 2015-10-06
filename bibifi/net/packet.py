@@ -49,7 +49,7 @@ class ReadPacket:
         return number
 
     def read_currency(self):
-        return Currency(self.read_number(8), self.read_number(1))
+        return Currency(dollars=self.read_number(8), cents=self.read_number(1))
 
     def get_data():
         return self.data
