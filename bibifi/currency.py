@@ -3,7 +3,7 @@ class Currency:
         self.dollars = dollars + cents // 100
         self.cents = cents % 100
 
-    def __validate(dollars, cents, overflow=False):
+    def __validate(self, dollars, cents, overflow=False):
         if dollars < 0:
             return False
         if overflow and dollars > 4294967295:
