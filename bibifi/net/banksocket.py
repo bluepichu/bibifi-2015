@@ -2,12 +2,13 @@ import socket
 import threading
 import socketserver
 
-import packet
+import bibifi.net.packet
 
 class ThreadedHandler(socketserver.BaseRequestHandler):	
 	def handle(self):
 		print("Incoming");
 		parse_packet = packet.read_packet(self.request)
+		print(parse_packet.read_currency());
 
 class ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	pass
