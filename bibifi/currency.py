@@ -3,15 +3,18 @@ class Currency:
         self.dollars = 0
         self.cents = 0
 
-    def validate(self, overflow=False, cents=self.cents, dollars=self.dollars):
+    def __validate(dollars, cents, overflow=False):
         if dollars < 0:
             return False
         if overflow and dollars > 4294967295:
             return False
-        return 0 <= cents <= 99
+        return 0 <= cents <= 99        
+
+    def validate(self, overflow=False):
+        return self.__validate(self.dollars, self.cents, overflow=overflow)
 
     def __update(self, new_dollars, new_cents):
-        if not self.validate(cents=new_cents, dollars=new_dollars):
+        if not self.__validate(new_dollars, new_cents):
             return False
         self.dollars = new_dollars
         self.cents = new_cents

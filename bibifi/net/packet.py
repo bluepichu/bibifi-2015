@@ -1,6 +1,7 @@
 import struct
 from Crypto.Hash import SHA512
 from Crypto.Signature import PKCS1_PSS
+from bibifi.currency import Currency
 
 def read_packet(sock):
     data = bytearray(4096)
@@ -9,7 +10,7 @@ def read_packet(sock):
     while count < 4:
         count += sock.recv_into(data_view[count:])
     outer_size, = struct.unpack('>I', data[:4])
-    if outer_size > 4096:
+    if outer_size > 4000:
         raise IOError('Packet too big')
     while count < outer_size:
         count += sock.recv_into(data_view[count:])
@@ -20,7 +21,7 @@ class ReadPacket:
         if len(data) < 8:
             raise IOError('Packet too small')
         self.outer_size, self.inner_size = struct.unpack('>II', data[:8])
-        if inner_size > len(data)-8 or outer_size != len(data):
+        if self.inner_size > len(data)-8 or self.outer_size != len(data):
             raise IOError('Invalid packet size')
         self.data = data[8:self.inner_size+8]
         self.signature = data[self.inner_size+8:]
