@@ -51,7 +51,7 @@ class ReadPacket:
     def read_currency(self):
         return Currency(dollars=self.read_number(8), cents=self.read_number(1))
 
-    def get_data():
+    def get_data(self):
         return self.data
 
     def assert_at_end(self):
