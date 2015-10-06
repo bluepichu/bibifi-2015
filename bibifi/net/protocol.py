@@ -181,4 +181,4 @@ class CheckBalance(ProtocolMethod):
         return balance
 
 methods = [None, CreateAccount(), Deposit(), Withdraw(), CheckBalance()]
-method_types = dict((x.name, i) for i, x in enumerate(methods))
+method_types = dict((x.name, i) for i, x in enumerate(methods) if x is not None)
