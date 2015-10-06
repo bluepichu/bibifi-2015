@@ -1,7 +1,7 @@
 class Currency:
     def __init__(self, dollars=0, cents=0):
-        self.dollars = dollars
-        self.cents = cents
+        self.dollars = dollars + cents // 100
+        self.cents = cents % 100
 
     def __validate(dollars, cents, overflow=False):
         if dollars < 0:
