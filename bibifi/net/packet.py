@@ -1,7 +1,7 @@
 import struct
 from Crypto.Hash import SHA512
 from Crypto.Signature import PKCS1_PSS
-from ..currency import Currency
+from bibifi.currency import Currency
 
 def read_packet(sock):
     data = bytearray(4096)
