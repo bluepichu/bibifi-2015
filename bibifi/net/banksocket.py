@@ -2,18 +2,23 @@ import socket
 import threading
 import socketserver
 
-import bibifi.net.packet
+import bibifi.net.packet as packet
+import bibifi.net.protocol as protocol
 
 class ThreadedHandler(socketserver.BaseRequestHandler):	
 	def handle(self):
 		print("Incoming");
 		parse_packet = packet.read_packet(self.request)
-		print(parse_packet.read_currency());
+		packet_type = parse_packet.read_number(4)
+		if packet_type > 0 and packet_type < len(protocol.methods):
+			method = protocol.methods[packet_type];
+		print(method);
 
 class ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	pass
 
 def listen(host, port):
+	print("Listening");
 	server = ThreadedServer((host, port), ThreadedHandler)
 	server_thread = threading.Thread(target = server.serve_forever)
 	server_thread.daemon = True
@@ -21,6 +26,5 @@ def listen(host, port):
 
 if __name__ == "__main__":
 	listen("127.0.0.1", 3000)
-	print("Listening");
 	while (True):
 		pass
