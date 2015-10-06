@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 from .util import generate_nonce
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Hash import SHA512, SHA
+from bibifi.validation import validate_name, validate_file, validate_currency
 
 
 class ProtocolMethod(metaclass=ABCMeta):
@@ -58,10 +59,10 @@ class CreateAccount(ProtocolMethod):
         return s
 
     def recv_req(self, s):
-        name = s.read_bytes()
+        name = s.read_bytes().decode("ascii")
         balance = s.read_currency()
         s.assert_at_end()
-
+        
         valid = validate_name(name) and validate_currency(balance, overflow=True)
 
         return valid, (name, balance)
