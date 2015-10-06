@@ -1,4 +1,4 @@
-from enum import Enum, unique
+from abc import ABCMeta, abstractmethod
 
 from .util import generate_nonce
 from Crypto.Cipher import PKCS1_OAEP
@@ -7,7 +7,7 @@ from Crypto.Hash import SHA512, SHA
 methods = [None, CreateAccount(), Deposit(), Withdraw(), CheckBalance()]
 method_types = dict((x.name, i) for i, x in enumerate(methods))
 
-class ProtocolMethod:
+class ProtocolMethod(metaclass=ABCMeta):
     def make_packet(self):
         p = WritePacket()
         p.write_number(methods_types[self.name], 1)
@@ -34,6 +34,22 @@ class ProtocolMethod:
         if hasher.digest() != digest:
             raise IOError('Invalid response digest')
 
+    @abstractmethod
+    def send_req(self, *args):
+        pass
+
+    @abstractmethod
+    def recv_req(self, s):
+        pass
+
+    @abstractmethod
+    def send_res(self, s, result, keys):
+        pass
+
+    @abstractmethod
+    def recv_res(self, s, r, keys):
+        pass
+
 class CreateAccount(ProtocolMethod):
     name = 'create_account'
 
@@ -43,14 +59,17 @@ class CreateAccount(ProtocolMethod):
         s.write_currency(balance)
         return s
 
-    def serv(self, bank, s, keys):
+    def recv_req(self, s):
         name = s.read_bytes()
         balance = s.read_currency()
         s.assert_at_end()
 
         valid = validate_name(name) and validate_currency(balance, overflow=True)
 
-        keycard = valid and bank.create_account(name, balance)
+        return valid, (name, balance)
+
+    def send_res(self, s, keycard, keys):
+        keycard = bank.create_account(name, balance)
 
         r = self.make_packet()
         if keycard:
@@ -86,15 +105,17 @@ def Transaction(ProtocolMethod):
         s.write_currency(amount)
         return s
 
-    def serv(self, bank, s, keys):
+    def recv_req(self, s):
         name = s.read_bytes()
         keycard = s.read_bytes()
         amount = s.read_currency()
         s.assert_at_end()
 
         valid = validate_name(name) and validate_currency(amount, overflow=True)
-        success = valid and self.handle_bank(bank, name, keycard, amount)
 
+        return valid, (name, keycard, amount)
+
+    def send_res(self, s, success, keys):
         r = self.make_packet()
         if success:
             r.write_number(1, 1)
@@ -115,14 +136,8 @@ def Transaction(ProtocolMethod):
 def Deposit(Transaction):
     name = 'deposit'
 
-    def handle_bank(self, bank, *args):
-        bank.deposit(*args)
-
 def Withdraw(Transaction):
     name = 'withdraw'
-
-    def handle_bank(self, bank, *args):
-        bank.withdraw(*args)
 
 def CheckBalance(ProtocolMethod):
     name = 'check_balance'
@@ -133,14 +148,16 @@ def CheckBalance(ProtocolMethod):
         s.write_bytes(keycard)
         return s
 
-    def serv(self, bank, s, keys):
+    def recv_req(self, s):
         name = s.read_bytes()
         keycard = s.read_bytes()
         s.assert_at_end()
 
         valid = validate_name(name)
-        balance = valid and bank.check_balance(name, keycard)
 
+        return valid, (name, keycard)
+
+    def send_res(self, s, balance, keys):
         r = self.make_packet()
 
         if balance:
