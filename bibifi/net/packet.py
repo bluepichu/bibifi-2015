@@ -1,6 +1,7 @@
 import struct
 from Crypto.Hash import SHA512
 from Crypto.Signature import PKCS1_PSS
+from ..currency import Currency
 
 def read_packet(sock):
     data = bytearray(4096)
@@ -20,7 +21,7 @@ class ReadPacket:
         if len(data) < 8:
             raise IOError('Packet too small')
         self.outer_size, self.inner_size = struct.unpack('>II', data[:8])
-        if inner_size > len(data)-8 or outer_size != len(data):
+        if self.inner_size > len(data)-8 or self.outer_size != len(data):
             raise IOError('Invalid packet size')
         self.data = data[8:self.inner_size+8]
         self.signature = data[self.inner_size+8:]
