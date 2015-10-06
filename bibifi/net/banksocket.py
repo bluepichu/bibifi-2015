@@ -6,7 +6,8 @@ import packet
 
 class ThreadedHandler(socketserver.BaseRequestHandler):	
 	def handle(self):
-		packet = read_packet(self)
+		print("Incoming");
+		parse_packet = packet.read_packet(self.request)
 
 class ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	pass
@@ -19,3 +20,6 @@ def listen(host, port):
 
 if __name__ == "__main__":
 	listen("127.0.0.1", 3000)
+	print("Listening");
+	while (True):
+		pass
