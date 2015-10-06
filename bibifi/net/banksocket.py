@@ -12,7 +12,11 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
 		packet_type = parse_packet.read_number(4)
 		if packet_type > 0 and packet_type < len(protocol.methods):
 			method = protocol.methods[packet_type];
-		print(method);
+		else:
+			#???
+			return;
+		valid, data = method.recv_req(parse_packet);
+		print(valid, data);
 
 class ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	pass
