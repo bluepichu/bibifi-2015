@@ -4,12 +4,12 @@ from .util import generate_nonce
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Hash import SHA512, SHA
 from bibifi.validation import validate_name, validate_file, validate_currency
-
+from bibifi.net.packet import WritePacket
 
 class ProtocolMethod(metaclass=ABCMeta):
     def make_packet(self):
         p = WritePacket()
-        p.write_number(methods_types[self.name], 1)
+        p.write_number(method_types[self.name], 1)
         return p
 
     def generate_digest(self, s, r):
@@ -23,8 +23,8 @@ class ProtocolMethod(metaclass=ABCMeta):
         r.write_bytes(hasher.digest())
 
     def validate_digest(self, s, r):
-        nonce = r.get_bytes()
-        digest = r.get_bytes()
+        nonce = r.read_bytes()
+        digest = r.read_bytes()
 
         hasher = SHA.new()
         hasher.update(nonce)
@@ -54,12 +54,12 @@ class CreateAccount(ProtocolMethod):
 
     def send_req(self, name, balance):
         s = self.make_packet()
-        s.write_bytes(name)
+        s.write_string(name)
         s.write_currency(balance)
         return s
 
     def recv_req(self, s):
-        name = s.read_bytes().decode("ascii")
+        name = s.read_string()
         balance = s.read_currency()
         s.assert_at_end()
         
@@ -68,8 +68,8 @@ class CreateAccount(ProtocolMethod):
         return valid, (name, balance)
 
     def send_res(self, s, keycard, keys):
-        keycard = bank.create_account(name, balance)
-
+        if keycard and len(keycard) > 200:
+            raise IOError('Keycard too long')
         r = self.make_packet()
         if keycard:
             r.write_number(1, 1)
@@ -99,13 +99,13 @@ class CreateAccount(ProtocolMethod):
 class Transaction(ProtocolMethod):
     def send_req(self, name, keycard, amount):
         s = self.make_packet()
-        s.write_bytes(name)
+        s.write_string(name)
         s.write_bytes(keycard)
         s.write_currency(amount)
         return s
 
     def recv_req(self, s):
-        name = s.read_bytes()
+        name = s.read_string()
         keycard = s.read_bytes()
         amount = s.read_currency()
         s.assert_at_end()
@@ -127,7 +127,7 @@ class Transaction(ProtocolMethod):
     def recv_res(self, s, r, keys):
         success = r.read_number(1)
 
-        self.validate_digest()
+        self.validate_digest(s, r)
         r.assert_at_end()
 
         return bool(success)
@@ -143,12 +143,12 @@ class CheckBalance(ProtocolMethod):
 
     def send_req(self, name, keycard):
         s = self.make_packet()
-        s.write_bytes(name)
+        s.write_string(name)
         s.write_bytes(keycard)
         return s
 
     def recv_req(self, s):
-        name = s.read_bytes()
+        name = s.read_string()
         keycard = s.read_bytes()
         s.assert_at_end()
 
@@ -182,4 +182,4 @@ class CheckBalance(ProtocolMethod):
         return balance
 
 methods = [None, CreateAccount(), Deposit(), Withdraw(), CheckBalance()]
-method_types = dict((x.name, i) for i, x in enumerate(methods) if x is not None)
+method_types = dict((x.name, i) for i, x in enumerate(methods) if x)

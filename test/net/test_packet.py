@@ -1,6 +1,7 @@
 from bibifi.net.packet import *
 
 from unittest.mock import Mock, MagicMock
+from test.util import *
 import pytest
 
 import socket
@@ -9,42 +10,6 @@ import Crypto.Hash.SHA512
 import Crypto.Signature.PKCS1_PSS
 
 xf = pytest.mark.xfail
-
-@pytest.fixture(scope='session')
-def rsa_key():
-    return Crypto.PublicKey.RSA.generate(2048)
-
-@pytest.fixture
-def sha512():
-    return Crypto.Hash.SHA512.new()
-
-@pytest.fixture(scope='session')
-def signer(rsa_key):
-    return Crypto.Signature.PKCS1_PSS.new(rsa_key)
-
-def multi_side_effect(*args):
-    effects = iter(args)
-
-    def effect(*args):
-        cur = next(effects)
-        if isinstance(cur, Exception):
-            raise cur
-        elif callable(cur):
-            return cur(*args)
-        else:
-            return cur
-
-    return effect
-
-def fill_buffer(values):
-    def filler(buf):
-        size = min(len(buf), len(values))
-        buf[:size] = values[:size]
-        return size
-    return filler
-
-def generate_data(length):
-    return bytes(x * 3773 % 256 for x in range(0, length))
 
 class TestReadPacket:
     def test_under_4(self):
@@ -177,6 +142,20 @@ class TestReadPacket:
         assert p.read_bytes() == data
         p.assert_at_end()
 
+    @pytest.mark.parametrize('s', [
+        '',
+        'hi',
+        'a'*500,
+        'eric',
+        'My Favorite String',
+        'a',
+    ])
+    def test_read_string(self, s):
+        bval = s.encode('utf-8')
+        sizes = struct.pack('>III', len(bval)+12, len(bval)+4, len(bval))
+        p = ReadPacket(sizes+bval)
+        assert p.read_string() == s
+
     @pytest.mark.parametrize('data,dollars,cents', [
         xf((b'a', 0, 0)),
         xf((b'\x00'*10, 0, 0)),
@@ -222,7 +201,7 @@ class TestReadPacket:
         with pytest.raises(IOError):
             p.verify_or_raise(rsa_key.publickey())
 
-    def test_verify_bad_key(self, signer, sha512):
+    def test_verify_bad_key(self, bad_rsa_key, signer, sha512):
         data = generate_data(50)
         sha512.update(data)
         signature = signer.sign(sha512)
@@ -233,7 +212,100 @@ class TestReadPacket:
 
         assert p.get_data() == data
 
-        new_key = Crypto.PublicKey.RSA.generate(2048)
-
         with pytest.raises(IOError):
-            p.verify_or_raise(new_key.publickey())
+            p.verify_or_raise(bad_rsa_key.publickey())
+
+class TestWritePacket:
+    @pytest.mark.parametrize('data', [
+        ([b'hello', b'world']),
+        ([b'5034']*20),
+        ([]),
+        ([b'',b'hi']),
+        ([b'']),
+    ])
+    def test_write(self, data):
+        p = WritePacket()
+        for datum in data:
+            p.write(datum)
+        assert p.get_data() == b''.join(data)
+
+    @pytest.mark.parametrize('number,size,result', [
+        (15, 2, b'\x00\x0f'),
+        (0x342241, 7, b'\x00\x00\x00\x00\x34\x22\x41'),
+        (0, 5, b'\x00\x00\x00\x00\x00'),
+        (0x121212121212121212121212121212, 16, b'\x00' + b'\x12'*15),
+    ])
+    def test_write_number(self, number, size, result):
+        p = WritePacket()
+        p.write_number(number, size)
+        assert p.get_data() == result
+
+    @pytest.mark.parametrize('number,size', [
+        (132412342342, 3),
+        (-5, 3),
+        (-1, 4),
+        (1000, 1),
+        (256, 1),
+        (65546, 2),
+    ])
+    def test_write_invalid_number(self, number, size):
+        p = WritePacket()
+        with pytest.raises(IOError):
+            p.write_number(number, size)
+
+    @pytest.mark.parametrize('data', [
+        (None),
+        (b'sdfj'),
+        (generate_data(234)),
+        (b'a'),
+    ])
+    def test_write_bytes(self, data):
+        data = data or b''
+        p = WritePacket()
+        size = struct.pack('>I', len(data))
+
+        p.write_bytes(data)
+        assert p.get_data() == size + data
+
+    @pytest.mark.parametrize('s', [
+        'a',
+        'hello',
+        'corwin',
+        'a'*500,
+        '',
+        'blah blah',
+    ])
+    def test_write_string(self, s):
+        p = WritePacket()
+        p.write_string(s)
+
+        data = s.encode('utf-8')
+        size = struct.pack('>I', len(data))
+        assert p.get_data() == size+data
+
+    def test_finish(self, rsa_key, signer, sha512):
+        data = generate_data(50)
+        presign = struct.pack('>I', len(data)) + data
+
+        sha512.update(presign)
+
+        p = WritePacket()
+        p.write(data)
+        finished = p.finish(rsa_key)
+
+        assert signer.verify(sha512, finished[len(data)+8:])
+
+    def test_finish_bad_key(self, bad_rsa_key, signer, sha512):
+        data = generate_data(50)
+
+        p = WritePacket()
+        p.write(data)
+        finished = p.finish(bad_rsa_key)
+
+        presign = struct.pack('>I', len(data)) + data
+        sha512.update(presign)
+
+        try:
+            assert not signer.verify(sha512, finished[len(data)+8:])
+        except:
+            pass

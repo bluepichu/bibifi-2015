@@ -31,3 +31,6 @@ class Currency:
         new_dollars = self.dollars - c.dollars + added_cents // 100
         new_cents = added_cents % 100
         return self.__update(new_dollars, new_cents)
+
+    def __eq__(self, c):
+        return isinstance(c, Currency) and c.dollars == self.dollars and c.cents == self.cents
