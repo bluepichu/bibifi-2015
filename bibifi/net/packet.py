@@ -10,7 +10,7 @@ def read_packet(sock):
     while count < 4:
         count += sock.recv_into(data_view[count:])
     outer_size, = struct.unpack('>I', data[:4])
-    if outer_size > 4096:
+    if outer_size > 4000:
         raise IOError('Packet too big')
     while count < outer_size:
         count += sock.recv_into(data_view[count:])
