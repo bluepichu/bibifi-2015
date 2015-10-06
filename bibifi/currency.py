@@ -1,7 +1,7 @@
 class Currency:
-    def __init__(self):
-        self.dollars = 0
-        self.cents = 0
+    def __init__(self, dollars=0, cents=0):
+        self.dollars = dollars
+        self.cents = cents
 
     def __validate(dollars, cents, overflow=False):
         if dollars < 0:
