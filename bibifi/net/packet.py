@@ -73,7 +73,11 @@ class WritePacket:
         self.data_create.append(data)
 
     def write_number(self, value, size):
-        self.write(bytes((a >> (size-i)*8) for i in range(size)))
+        if value < 0:
+            raise IOError('Cannot encode negative value')
+        if value >= 1 << 8*size:
+            raise IOError('Number too large')
+        self.write(bytes((value >> (size-i-1)*8)&0xff for i in range(size)))
 
     def write_bytes(self, data):
         self.write(struct.pack('>I', len(data)))
