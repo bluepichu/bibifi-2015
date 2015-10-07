@@ -23,8 +23,8 @@ class ProtocolMethod(metaclass=ABCMeta):
         r.write_bytes(hasher.digest())
 
     def validate_digest(self, s, r):
-        nonce = r.get_bytes()
-        digest = r.get_bytes()
+        nonce = r.read_bytes()
+        digest = r.read_bytes()
 
         hasher = SHA.new()
         hasher.update(nonce)
@@ -59,7 +59,7 @@ class CreateAccount(ProtocolMethod):
         return s
 
     def recv_req(self, s):
-        name = s.read_bytes().decode("ascii")
+        name = s.read_bytes().decode("ascii") # TODO fix this hack
         balance = s.read_currency()
         s.assert_at_end()
         
@@ -68,8 +68,8 @@ class CreateAccount(ProtocolMethod):
         return valid, (name, balance)
 
     def send_res(self, s, keycard, keys):
-        keycard = bank.create_account(name, balance)
-
+        if keycard and len(keycard) > 200:
+            raise IOError('Keycard too long')
         r = self.make_packet()
         if keycard:
             r.write_number(1, 1)
@@ -127,7 +127,7 @@ class Transaction(ProtocolMethod):
     def recv_res(self, s, r, keys):
         success = r.read_number(1)
 
-        self.validate_digest()
+        self.validate_digest(s, r)
         r.assert_at_end()
 
         return bool(success)
