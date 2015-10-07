@@ -62,7 +62,10 @@ class ReadPacket:
         h = SHA512.new()
         h.update(self.data)
         signer = PKCS1_PSS.new(key)
-        if not signer.verify(h, self.signature):
+        try:
+            if not signer.verify(h, self.signature):
+                raise IOError('Invalid packet signature')
+        except ValueError:
             raise IOError('Invalid packet signature')
 
 class WritePacket:
