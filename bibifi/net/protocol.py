@@ -4,12 +4,12 @@ from .util import generate_nonce
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Hash import SHA512, SHA
 from bibifi.validation import validate_name, validate_file, validate_currency
-
+from bibifi.net.packet import WritePacket
 
 class ProtocolMethod(metaclass=ABCMeta):
     def make_packet(self):
         p = WritePacket()
-        p.write_number(methods_types[self.name], 1)
+        p.write_number(method_types[self.name], 1)
         return p
 
     def generate_digest(self, s, r):
