@@ -1,4 +1,6 @@
 import pytest
+from unittest.mock import Mock
+
 import Crypto
 
 def multi_side_effect(*args):
@@ -32,6 +34,13 @@ def rsa_key():
 @pytest.fixture(scope='session')
 def bad_rsa_key():
     return Crypto.PublicKey.RSA.importKey(b'-----BEGIN RSA PRIVATE KEY-----\nMIIEpQIBAAKCAQEA7UPs8UdVk+jFZG/2SaOreft+oZcXb3aEiCDQAGnj6QC+5vVS\nYTCWgcNBnS82/hu/XwBfSdhgVQdOau/82IBrCPPD41qBKxa8cqPgaz9JxW9iKmPB\nhdGALWgzn5zl0sH3dZUkgD4euMFsIEtF06lkHyAopDxRQ7VoayrTBShllrgRdzJ1\n45qs4SfKghB3l8a14UljkUU+gVc74MN2kp+fCElgngxi699LUCQAyQQ2CCfpeHxk\nUmGTBCtXJUA1MAsr/87cHfNogkjgPJTQBuwBzySYKmWzF4J8azA0Ikyb9QQuBHFL\nJRktzeWwLo1PRmKy0lCuvrkD1qXRGuLsKbuaYQIDAQABAoIBAQC6wwQIrHEFe22d\ncLA6KPY6j6ePBMKyv2T1TnbMTI3VA/xBCows6rUeMZc9ZkPwY+EQo9dd5k91vsmQ\nTZYGyZb3NgJUvRH92+i8iJiHcwrbuaBY46sabd1qYKJ6GmOhsYLbcGmJ9Nvz7HTz\nOq0dPjIMeiDjnoMNPAeUi+INJk5JAtihEV+OXyEn7T6nj97ChbgIUtwh6Gs+SXo5\noP9lXoBayfC3cqbFT5C12AXS8UOkFf0pKPxppvmSl9yWG4nyJtaeQf/X/rUWPe9F\na9Bq6gs84RyzWnmiPCezPId4KCrw+B7Ciz4332b2isikxq4z5TBB0NZUejv8cAUE\nS5P8M3U9AoGBAO127Oh73odnrr5nBC1FoNVVkbiCqGXCPQ+qvziNIuXH1HGgF3Rl\ncSpHW8y4+M1X3y0C+3KKK7n4vxgjsEl/PFV9Yz5TlmkiLPMQy6CFcAyoRnUjJBzk\nZyxdLeTPQ6n9DicVkvZnM4/2MaHIFYd3f9QJvHv+H2m/+V/QL2bWHXZbAoGBAP/J\nBPFObsnYx8tOcSGpSC4Zb9GpVJobP0UNfeSEIWZ52z9oQaaYELH2OUFpdVILA+Km\nS06Y6ndrcJ3/jUAmGPV1xJaepV16uQqTtb5K+pg8CnqQemW6Ozya0tH+Rb7BSLVf\nCmTnb1OVi2/1xej5fgHCVesT2RMntbXROLPmlGbzAoGAMMu+VOuXR6XDn7aVgiQL\nr6rcvdiDeB2Y5I5Gqv09jZAplIu8JhvuTCzLrV7ZKYEECEDToK7J23ZE9lXnFMND\nh6GzcgxFHSd7qxrpbPvekYtGpy1ob1Nz7AbdtmXs1pJ8hQWG5IFCdDO38TGnUuX4\na37wr14B4H4lZU3nX69h8H8CgYEA7kvYzvbDQEk12bK6syGCnXAVPL8Eko3P5AUt\nxDdU5qOgHvKCNzJ0W1eI/+e/5S9d70n93ruXtKnjwU7TyW+00PlmrOwgI3ax7aiv\nKRmxXSKSoJz5asyVY2DaB8lcMNrhYhepF1iF3tjzjtrqBqJpQjpK0TcshSv5nenN\naczndQECgYEApvTWT9hiEeZpVmxgWlxdqxsWwxYXJXoAT3FcW4wMjPXeJ1eCtezz\nFenivNKed6teg4WTuhDkQiib9an9ozlfkcyZU06BVyxYfuLTAv6zbXyDS7wFNaRC\nGId6Bnn+gtyfAmy7VrOHk596XZvbGSneOsige6nKmgwtBKkfnsRrRN0=\n-----END RSA PRIVATE KEY-----')
+
+@pytest.fixture(scope='session')
+def keys(rsa_key, bad_rsa_key):
+    class Keys:
+        atm = rsa_key
+        bank = bad_rsa_key
+    return Keys()
 
 @pytest.fixture
 def sha512():
