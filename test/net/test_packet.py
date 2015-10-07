@@ -1,7 +1,7 @@
 from bibifi.net.packet import *
 
 from unittest.mock import Mock, MagicMock
-from test.util import *
+from test.conftest import *
 import pytest
 
 import socket
