@@ -54,12 +54,12 @@ class CreateAccount(ProtocolMethod):
 
     def send_req(self, name, balance):
         s = self.make_packet()
-        s.write_bytes(name)
+        s.write_string(name)
         s.write_currency(balance)
         return s
 
     def recv_req(self, s):
-        name = s.read_bytes().decode("ascii") # TODO fix this hack
+        name = s.read_string()
         balance = s.read_currency()
         s.assert_at_end()
         
@@ -99,13 +99,13 @@ class CreateAccount(ProtocolMethod):
 class Transaction(ProtocolMethod):
     def send_req(self, name, keycard, amount):
         s = self.make_packet()
-        s.write_bytes(name)
+        s.write_string(name)
         s.write_bytes(keycard)
         s.write_currency(amount)
         return s
 
     def recv_req(self, s):
-        name = s.read_bytes()
+        name = s.read_string()
         keycard = s.read_bytes()
         amount = s.read_currency()
         s.assert_at_end()
@@ -143,12 +143,12 @@ class CheckBalance(ProtocolMethod):
 
     def send_req(self, name, keycard):
         s = self.make_packet()
-        s.write_bytes(name)
+        s.write_string(name)
         s.write_bytes(keycard)
         return s
 
     def recv_req(self, s):
-        name = s.read_bytes()
+        name = s.read_string()
         keycard = s.read_bytes()
         s.assert_at_end()
 

@@ -28,12 +28,12 @@ def protocol_sample():
 def create_read_packet(data):
     return ReadPacket(struct.pack('>II', len(data)+8, len(data)) + data)
 
-def test_make_packet(self, protocol_sample):
+def test_make_packet(protocol_sample):
     p = protocol_sample.make_packet()
     assert p.get_data() == struct.pack('>B', protocol_sample.method_type)
 
 # TODO improve testing of digest
-def test_digest(self, protocol_sample):
+def test_digest(protocol_sample):
     s = create_read_packet(generate_data(64))
 
     rw = WritePacket()
@@ -47,7 +47,7 @@ def protocol_method(request):
 
 @pytest.fixture
 def protocol_method_request_args(request, protocol_method):
-    names = [b'hello', b'hi', b'Matthew Savage', b'Corwin de Boor', b'a'*500, b'bleh']
+    names = ['hello', 'hi', 'Matthew Savage', 'Corwin de Boor', 'a'*500, 'bleh']
     currencies = [Currency(50, 50), Currency(0, 0), Currency(234, 17), Currency(18, 34), Currency(2341, 79), Currency(342, 1234)]
     keycards = [b'a', b'keycard', b'a'*500, b'keycard2', b'thisisasecret', generate_data(50)]
     if not 0 <= request.param < len(names):

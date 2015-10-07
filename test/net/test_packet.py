@@ -142,6 +142,20 @@ class TestReadPacket:
         assert p.read_bytes() == data
         p.assert_at_end()
 
+    @pytest.mark.parametrize('s', [
+        '',
+        'hi',
+        'a'*500,
+        'eric',
+        'My Favorite String',
+        'a',
+    ])
+    def test_read_string(self, s):
+        bval = s.encode('utf-8')
+        sizes = struct.pack('>III', len(bval)+12, len(bval)+4, len(bval))
+        p = ReadPacket(sizes+bval)
+        assert p.read_string() == s
+
     @pytest.mark.parametrize('data,dollars,cents', [
         xf((b'a', 0, 0)),
         xf((b'\x00'*10, 0, 0)),
@@ -252,6 +266,22 @@ class TestWritePacket:
 
         p.write_bytes(data)
         assert p.get_data() == size + data
+
+    @pytest.mark.parametrize('s', [
+        'a',
+        'hello',
+        'corwin',
+        'a'*500,
+        '',
+        'blah blah',
+    ])
+    def test_write_string(self, s):
+        p = WritePacket()
+        p.write_string(s)
+
+        data = s.encode('utf-8')
+        size = struct.pack('>I', len(data))
+        assert p.get_data() == size+data
 
     def test_finish(self, rsa_key, signer, sha512):
         data = generate_data(50)

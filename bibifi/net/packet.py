@@ -41,6 +41,9 @@ class ReadPacket:
         count, = struct.unpack('>I', self.read(4))
         return self.read(count)
 
+    def read_string(self, encoding='utf-8'):
+        return self.read_bytes().decode(encoding)
+
     def read_number(self, size):
         data = self.read(size)
         number = 0
@@ -85,6 +88,9 @@ class WritePacket:
     def write_bytes(self, data):
         self.write(struct.pack('>I', len(data)))
         self.write(data)
+
+    def write_string(self, s, encoding='utf-8'):
+        self.write_bytes(s.encode(encoding))
 
     def write_currency(self, c):
         self.write_number(c.dollars, 8)
