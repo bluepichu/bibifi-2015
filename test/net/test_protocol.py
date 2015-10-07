@@ -47,15 +47,13 @@ def protocol_method(request):
 
 @pytest.fixture
 def protocol_method_request_args(request, protocol_method):
-    names = ['hello', 'hi', 'Matthew Savage', 'Corwin de Boor', 'a'*500, 'bleh']
+    names = ['hello', 'hi', 'bluepichu', 'Strikeskids', 'a'*500, 'bleh']
     currencies = [Currency(50, 50), Currency(0, 0), Currency(234, 17), Currency(18, 34), Currency(2341, 79), Currency(342, 1234)]
     keycards = [b'a', b'keycard', b'a'*500, b'keycard2', b'thisisasecret', generate_data(50)]
     if not 0 <= request.param < len(names):
         return
     i = request.param
-    if protocol_method.name == 'create_account':
-        return (names[i], currencies[i])
-    elif protocol_method.name == 'withdraw' or protocol_method.name == 'deposit':
+    if protocol_method.name in {'create_account', 'withdraw', 'deposit'}:
         return (names[i], keycards[i], currencies[i])
     elif protocol_method.name == 'check_balance':
         return (names[i], keycards[i])
@@ -63,9 +61,7 @@ def protocol_method_request_args(request, protocol_method):
 @pytest.fixture
 def protocol_method_return_value(request, protocol_method):
     args = []
-    if protocol_method.name == 'create_account':
-        args = [False, b'hello world', b'a', b'a'*200]
-    elif protocol_method.name == 'withdraw' or protocol_method.name == 'deposit':
+    if protocol_method.name in {'create_account', 'withdraw', 'deposit'}:
         args = [False, True]
     elif protocol_method.name == 'check_balance':
         args = [Currency(50, 50), Currency(0, 0), Currency(234, 17), Currency(18, 34), Currency(2341, 79), Currency(342, 1234)]

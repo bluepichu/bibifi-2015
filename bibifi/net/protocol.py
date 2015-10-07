@@ -42,59 +42,12 @@ class ProtocolMethod(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def send_res(self, s, result, keys):
+    def send_res(self, s, result):
         pass
 
     @abstractmethod
-    def recv_res(self, s, r, keys):
+    def recv_res(self, s, r):
         pass
-
-class CreateAccount(ProtocolMethod):
-    name = 'create_account'
-
-    def send_req(self, name, balance):
-        s = self.make_packet()
-        s.write_string(name)
-        s.write_currency(balance)
-        return s
-
-    def recv_req(self, s):
-        name = s.read_string()
-        balance = s.read_currency()
-        s.assert_at_end()
-        
-        valid = validate_name(name) and validate_currency(balance, overflow=True)
-
-        return valid, (name, balance)
-
-    def send_res(self, s, keycard, keys):
-        if keycard and len(keycard) > 200:
-            raise IOError('Keycard too long')
-        r = self.make_packet()
-        if keycard:
-            r.write_number(1, 1)
-            cipher = PKCS1_OAEP.new(keys.atm)
-            r.write_bytes(cipher.encrypt(keycard))
-        else:
-            r.write_number(0, 1)
-
-        self.generate_digest(s, r)
-
-        return r
-
-    def recv_res(self, s, r, keys):
-        success = r.read_number(1)
-        keycard = None
-
-        if success:
-            keycard_cipher = r.read_bytes()
-            cipher = PKCS1_OAEP.new(keys.atm)
-            keycard = cipher.decrypt(keycard_cipher)
-
-        self.validate_digest(s, r)
-        r.assert_at_end()
-
-        return keycard
 
 class Transaction(ProtocolMethod):
     def send_req(self, name, keycard, amount):
@@ -131,6 +84,9 @@ class Transaction(ProtocolMethod):
         r.assert_at_end()
 
         return bool(success)
+
+class CreateAccount(Transaction):
+    name = 'create_account'
 
 class Deposit(Transaction):
     name = 'deposit'

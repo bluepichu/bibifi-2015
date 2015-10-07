@@ -18,8 +18,8 @@ class ProtocolBank(BaseBank):
         r.verify_or_raise()
         return handler.recv_res(s, r, self.keys)
 
-    def create_account(self, name, balance):
-        return self.process_request(CreateAccount(), name, balance)
+    def create_account(self, name, keycard, balance):
+        return self.process_request(CreateAccount(), name, keycard, balance)
 
     def deposit(self, name, keycard, amount):
         return self.process_request(Deposit(), name, keycard, amount)
