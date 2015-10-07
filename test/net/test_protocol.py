@@ -2,7 +2,7 @@ from bibifi.net.protocol import *
 from bibifi.net import protocol
 
 import pytest
-from test.util import *
+from test.conftest import *
 from unittest.mock import Mock
 
 import struct
