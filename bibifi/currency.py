@@ -32,5 +32,8 @@ class Currency:
         new_cents = added_cents % 100
         return self.__update(new_dollars, new_cents)
 
+    def to_json(self):
+        return '%ld.%02d'%(self.dollars, self.cents)
+
     def __eq__(self, c):
         return isinstance(c, Currency) and c.dollars == self.dollars and c.cents == self.cents
