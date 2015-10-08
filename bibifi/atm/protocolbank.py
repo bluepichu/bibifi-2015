@@ -1,8 +1,9 @@
-from ..net.protocol import CreateAccount, Withdraw, Deposit, CheckBalance
+from bibifi.net.protocol import CreateAccount, Withdraw, Deposit, CheckBalance
+from bibifi.net.packet import read_packet
 from socket import socket
 import os.path
 import sys
-from ..net.packet import read_packet
+import json
 
 class ProtocolBank(BaseBank):
     def __init__(self, host, port, keys):
@@ -18,14 +19,26 @@ class ProtocolBank(BaseBank):
         r.verify_or_raise()
         return handler.recv_res(s, r, self.keys)
 
-    def create_account(self, name, balance):
-        return self.process_request(CreateAccount(), name, balance)
+    def create_account(self, name, keycard, balance):
+        result = self.process_request(CreateAccount(), name, keycard, balance)
+        if result:
+            print('{"account":%s,"initial_balance":%s'%(json.dumps(name), balance.to_json()))
+        return result
 
     def deposit(self, name, keycard, amount):
-        return self.process_request(Deposit(), name, keycard, amount)
+        result = self.process_request(Deposit(), name, keycard, amount)
+        if result:
+            print('{"account":%s,"deposit":%s'%(json.dumps(name), amount.to_json()))
+        return result
 
     def withdraw(self, name, keycard, amount):
-        return self.process_request(Withdraw(), name, keycard, amount)
+        result = self.process_request(Withdraw(), name, keycard, amount)
+        if result:
+            print('{"account":%s,"withdraw":%s'%(json.dumps(name), amount.to_json()))
+        return result
 
     def check_balance(self, name, keycard):
-        return self.process_request(Deposit(), name, keycard)
+        result = self.process_request(Deposit(), name, keycard)
+        if result:
+            print('{"account":%s,"balance":%s'%(json.dumps(name), result.to_json()))
+        return result
