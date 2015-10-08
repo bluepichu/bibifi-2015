@@ -22,23 +22,23 @@ class ProtocolBank(BaseBank):
     def create_account(self, name, keycard, balance):
         result = self.process_request(CreateAccount(), name, keycard, balance)
         if result:
-            print('{"account":%s,"initial_balance":%s'%(json.dumps(name), balance.to_json()))
+            print('{"account":%s,"initial_balance":%s'%(json.dumps(name), balance))
         return result
 
     def deposit(self, name, keycard, amount):
         result = self.process_request(Deposit(), name, keycard, amount)
         if result:
-            print('{"account":%s,"deposit":%s'%(json.dumps(name), amount.to_json()))
+            print('{"account":%s,"deposit":%s'%(json.dumps(name), amount))
         return result
 
     def withdraw(self, name, keycard, amount):
         result = self.process_request(Withdraw(), name, keycard, amount)
         if result:
-            print('{"account":%s,"withdraw":%s'%(json.dumps(name), amount.to_json()))
+            print('{"account":%s,"withdraw":%s'%(json.dumps(name), amount))
         return result
 
     def check_balance(self, name, keycard):
         result = self.process_request(Deposit(), name, keycard)
         if result:
-            print('{"account":%s,"balance":%s'%(json.dumps(name), result.to_json()))
+            print('{"account":%s,"balance":%s'%(json.dumps(name), result))
         return result
