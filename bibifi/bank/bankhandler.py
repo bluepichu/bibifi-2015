@@ -47,6 +47,9 @@ class BankHandler:
         lock_deque.append(request)
         return False
 
+    def termination_hook(self):
+        self.requests.put(BankRequest.term_request())
+
     def serve_forever():
         serving = True
         while True:
