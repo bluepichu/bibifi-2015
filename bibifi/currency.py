@@ -14,6 +14,8 @@ class Currency:
         return self.__validate(self.dollars, self.cents, overflow=overflow)
 
     def __update(self, new_dollars, new_cents):
+        new_dollars = new_dollars + new_cents // 100
+        new_cents = new_cents % 100
         if not self.__validate(new_dollars, new_cents):
             return False
         self.dollars = new_dollars
@@ -21,19 +23,16 @@ class Currency:
         return True
 
     def add(self, c):
-        added_cents = self.cents + c.cents
-        new_dollars = self.dollars + c.dollars + added_cents // 100
-        new_cents = added_cents % 100
-        return self.__update(new_dollars, new_cents)
+        return self.__update(self.dollars + c.dollars, self.cents + c.cents)
 
     def sub(self, c):
-        added_cents = self.cents - c.cents
-        new_dollars = self.dollars - c.dollars + added_cents // 100
-        new_cents = added_cents % 100
-        return self.__update(new_dollars, new_cents)
+        return self.__update(self.dollars - c.dollars, self.cents - c.cents)
 
-    def to_json(self):
-        return '%ld.%02d'%(self.dollars, self.cents)
+    def __str__(self):
+        return '%d.%02d'%(self.dollars, self.cents)
+
+    def __repr__(self):
+        return 'Currency(dollars=%d, cents=%d)'%(self.dollars, self.cents)
 
     def __eq__(self, c):
         return isinstance(c, Currency) and c.dollars == self.dollars and c.cents == self.cents
