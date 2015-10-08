@@ -1,6 +1,8 @@
 from bibifi.bank import banksocket, bankhandler
 from bibifi.authfile import Keys
 
+import sys
+
 def main():
     try:
         # TODO read cl arguments
