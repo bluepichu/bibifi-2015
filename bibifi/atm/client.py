@@ -42,7 +42,7 @@ def main():
 			exit(255)
 		bank.deposit(args.a, args.c, amount)
 	elif args.d:
-		amount = validationvalidate_numeric_input(args.d)
+		amount = validation.validate_numeric_input(args.d)
 		if not amount or (amount.dollars == 0 and amount.cents == 0) or not validation.validate_card_file(args.c):
 			print_error("Invalid parameters.")
 			print_error("Exiting with code 255...")
@@ -54,7 +54,7 @@ def main():
 			print_error("Invalid parameters.")
 			print_error("Exiting with code 255...")
 			exit(255)
-		bank.widthdraw(args.a, args.c, amount)
+		bank.withdraw(args.a, args.c, amount)
 	elif args.g:
 		if not validation.validate_card_file(args.c):
 			print_error("Invalid parameters.")

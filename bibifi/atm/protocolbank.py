@@ -41,7 +41,7 @@ class ProtocolBank(BaseBank):
         return result
 
     def check_balance(self, name, keycard):
-        result = self.process_request(Deposit(), name, keycard)
+        result = self.process_request(CheckBalance(), name, keycard)
         if result:
             print('{"account":%s,"balance":%s'%(json.dumps(name), result))
         return result
