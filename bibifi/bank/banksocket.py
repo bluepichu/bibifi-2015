@@ -11,7 +11,9 @@ from bibifi.net import protocol
 from bibifi.bank.bankhandler import BankRequestStage, BankRequest
 
 class ThreadedHandler(socketserver.BaseRequestHandler):
-    def __init__(self, handler, auth_keys):
+    def __init__(self, handler, auth_keys, *args):
+        super().__init__(*args)
+        
         self.result_queue = Queue(maxsize=1)
         self.finished = False
         self.handler = handler
@@ -20,14 +22,14 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
 
     @classmethod
     def initializer_with_args(cls, *args):
-        def init():
-            return cls(*args)
+        def init(*pargs):
+            return cls(*(args + pargs))
         return init
 
     def bank_request(self, type, data, stage):
         self.handler.requests.push(BankRequest(self, type, data, stage))
 
-    def read_packet():
+    def read_packet(self):
         return read_packet(self.request)
 
     def get_method(self, req_packet):
@@ -49,6 +51,8 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
         self.request.sendall(res_packet.finish(self.auth_keys.bank))
 
     def handle(self):
+        method = None
+        data = None
         try:
             req_packet = self.read_packet()
             method = self.get_method(req_packet)
@@ -86,6 +90,7 @@ def listen(host, port, bank_handler, auth_keys):
     server_thread.start()
 
     def handle_terminate():
-        server_thread.stop()
+        server.shutdown()
 
     return handle_terminate
+

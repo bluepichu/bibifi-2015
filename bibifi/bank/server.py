@@ -3,6 +3,7 @@ from bibifi.authfile import Keys
 from bibifi import validation, argparser
 
 import sys
+import signal
 
 def main():
     parser = argparser.ThrowingArgumentParser()
@@ -23,7 +24,10 @@ def main():
 
 # port and auth_file_path should be validated
 def start_server(port, auth_file_path):
-    def sigterm_hook():
+    def sigterm_hook(signum, stack_frame):
+        if signum == signal.SIGINT:
+            print("VERY BAD. CHANGE THIS")
+        print(signum)
         term_socket()
         term_handler()
 
@@ -31,7 +35,10 @@ def start_server(port, auth_file_path):
     auth_keys.export_auth_file(auth_file_path)
 
     handler = bankhandler.BankHandler()
-    term_handler = hander.termination_hook()
+    term_handler = handler.termination_hook()
+
+    signal.signal(signal.SIGTERM, sigterm_hook)
+    signal.signal(signal.SIGINT, sigterm_hook)
 
     term_socket = banksocket.listen('0.0.0.0', port, handler, auth_keys)
 
