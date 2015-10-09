@@ -54,7 +54,7 @@ class BankHandler:
     def termination_hook(self):
         self.requests.put(BankRequest.term_request())
 
-    def serve_forever():
+    def serve_forever(self):
         serving = True
         while True:
             try:

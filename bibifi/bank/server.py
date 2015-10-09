@@ -31,7 +31,7 @@ def start_server(port, auth_file_path):
     auth_keys.export_auth_file(auth_file_path)
 
     handler = bankhandler.BankHandler()
-    term_handler = hander.termination_hook()
+    term_handler = handler.termination_hook()
 
     term_socket = banksocket.listen('0.0.0.0', port, handler, auth_keys)
 
