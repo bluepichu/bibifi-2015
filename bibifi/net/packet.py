@@ -1,6 +1,7 @@
 import struct
 from Crypto.Hash import SHA512
 from Crypto.Signature import PKCS1_PSS
+from bibifi.currency import Currency
 
 def read_packet(sock):
     data = bytearray(4096)
@@ -8,8 +9,8 @@ def read_packet(sock):
     count = 0
     while count < 4:
         count += sock.recv_into(data_view[count:])
-    outer_size = struct.unpack('>I', data[:4])
-    if outer_size > 4096:
+    outer_size, = struct.unpack('>I', data[:4])
+    if outer_size > 4000:
         raise IOError('Packet too big')
     while count < outer_size:
         count += sock.recv_into(data_view[count:])
@@ -20,7 +21,7 @@ class ReadPacket:
         if len(data) < 8:
             raise IOError('Packet too small')
         self.outer_size, self.inner_size = struct.unpack('>II', data[:8])
-        if inner_size > len(data)-8 or outer_size != len(data):
+        if self.inner_size > len(data)-8 or self.outer_size != len(data):
             raise IOError('Invalid packet size')
         self.data = data[8:self.inner_size+8]
         self.signature = data[self.inner_size+8:]
@@ -40,6 +41,9 @@ class ReadPacket:
         count, = struct.unpack('>I', self.read(4))
         return self.read(count)
 
+    def read_string(self, encoding='utf-8'):
+        return self.read_bytes().decode(encoding)
+
     def read_number(self, size):
         data = self.read(size)
         number = 0
@@ -48,9 +52,9 @@ class ReadPacket:
         return number
 
     def read_currency(self):
-        return Currency(self.read_number(8), self.read_number(1))
+        return Currency(dollars=self.read_number(8), cents=self.read_number(1))
 
-    def get_data():
+    def get_data(self):
         return self.data
 
     def assert_at_end(self):
@@ -61,7 +65,10 @@ class ReadPacket:
         h = SHA512.new()
         h.update(self.data)
         signer = PKCS1_PSS.new(key)
-        if not signer.verify(h, self.signature):
+        try:
+            if not signer.verify(h, self.signature):
+                raise IOError('Invalid packet signature')
+        except ValueError:
             raise IOError('Invalid packet signature')
 
 class WritePacket:
@@ -72,11 +79,18 @@ class WritePacket:
         self.data_create.append(data)
 
     def write_number(self, value, size):
-        self.write(bytes((a >> (size-i)*8) for i in range(size)))
+        if value < 0:
+            raise IOError('Cannot encode negative value')
+        if value >= 1 << 8*size:
+            raise IOError('Number too large')
+        self.write(bytes((value >> (size-i-1)*8)&0xff for i in range(size)))
 
     def write_bytes(self, data):
         self.write(struct.pack('>I', len(data)))
         self.write(data)
+
+    def write_string(self, s, encoding='utf-8'):
+        self.write_bytes(s.encode(encoding))
 
     def write_currency(self, c):
         self.write_number(c.dollars, 8)

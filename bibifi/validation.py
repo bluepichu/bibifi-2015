@@ -45,9 +45,10 @@ def validate_port(port):
 	return 0 < port < 65536
 
 def validate_name(name):
-	return 1 <= len(name) <= 250 and valid_characters.match(name)
+    return 1 <= len(name) <= 250 and valid_characters.match(name) != None
 
 def validate_file(file):
-	if file in invalid_files:
-		return False
-	return 1 <= len(file) <= 255 and valid_characters.match(file)
+    if file in invalid_files:
+        return False
+    return 1 <= len(file) <= 255 and valid_characters.match(file) != None
+
