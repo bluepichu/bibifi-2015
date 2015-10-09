@@ -7,6 +7,44 @@ from bibifi.net.packet import WritePacket
 import sys
 import os
 
+def main():
+    parser = argparser.ThrowingArgumentParser(description="Process atm input.")
+    parser.add_argument("-s", metavar="<auth-file>", type=str, help="The bank's auth file.  (Default: bank.auth)", default="bank.auth")
+    parser.add_argument("-i", metavar="<ip-address>", type=str, help="The bank's IP address.", default="127.0.0.1")
+    parser.add_argument("-p", metavar="<port>", type=int, help="The bank's port.", default=3000)
+    parser.add_argument("-c", metavar="<card-file>", type=str, help="The cardfile for the account.")
+    parser.add_argument("-a", metavar="<account>", type=str, help="The account on which to operate", required=True)
+    
+    actions = parser.add_mutually_exclusive_group(required=True)
+
+    actions.add_argument("-n", metavar="<balance>", type=str, help="Creates a new account with the given inital balance.")
+    actions.add_argument("-d", metavar="<amount", help="Deposits the given amount into an account.")
+    actions.add_argument("-w", metavar="<amount>", type=str, help="Withdraws the given amount from an account.")
+    actions.add_argument("-g", action="store_true", help="Gets the balance of an account.")
+
+    args = run_parser()
+
+    if not validate_parameters(args):
+        print_error("Invalid parameters.")
+        print_error("Exiting with code 255...")
+        exit(255)
+
+    auth_keys = Keys.load_from_file(args.s)
+    method = get_method(args, auth_keys)
+    run_method(method)
+
+def run_parser(parser):
+    try:
+        args = parser.parse_args()
+        if not args.c: args.c = args.a + '.card'
+    except Exception as err:
+        print_error(err)
+        print_error("Exiting with code 255...")
+        exit(255)
+
+def validate_parameters(args):
+    return validation.validate_ip(args.i) and validation.validate_port(args.p) and validation.validate_name(args.a)
+
 def load_card_file(card_file_path, create=False):
     if not validation.validate_card_file(card_file_path, exists=not create):
         print_error('Invalid card file')
@@ -26,38 +64,7 @@ def load_card_file(card_file_path, create=False):
         print_error('Failed to get card file', e)
         exit(255)
 
-def main():
-    parser = argparser.ThrowingArgumentParser(description="Process atm input.")
-    parser.add_argument("-s", metavar="<auth-file>", type=str, help="The bank's auth file.  (Default: bank.auth)", default="bank.auth")
-    parser.add_argument("-i", metavar="<ip-address>", type=str, help="The bank's IP address.", default="127.0.0.1")
-    parser.add_argument("-p", metavar="<port>", type=int, help="The bank's port.", default=3000)
-    parser.add_argument("-c", metavar="<card-file>", type=str, help="The cardfile for the account.")
-    parser.add_argument("-a", metavar="<account>", type=str, help="The account on which to operate", required=True)
-    
-    actions = parser.add_mutually_exclusive_group(required=True)
-
-    actions.add_argument("-n", metavar="<balance>", type=str, help="Creates a new account with the given inital balance.")
-    actions.add_argument("-d", metavar="<amount", help="Deposits the given amount into an account.")
-    actions.add_argument("-w", metavar="<amount>", type=str, help="Withdraws the given amount from an account.")
-    actions.add_argument("-g", action="store_true", help="Gets the balance of an account.")
-
-    try:
-        args = parser.parse_args()
-    except Exception as err:
-        print_error(err)
-        print_error("Exiting with code 255...")
-        exit(255)
-
-    if not args.c:
-        args.c = args.a + ".card"
-
-    auth_keys = Keys.load_from_file(args.s)
-
-    if not validation.validate_ip(args.i) or not validation.validate_port(args.p) or not validation.validate_name(args.a):
-        print_error("Invalid parameters.")
-        print_error("Exiting with code 255...")
-        exit(255)
-
+def get_method(args, auth_keys):
     bank = ProtocolBank(args.i, args.p, auth_keys)
 
     if args.n:
@@ -92,10 +99,18 @@ def main():
     else:
         exit(255) # ???
 
+    name = args.a
+
+    if amount:
+        execute = lambda: method(name, card, amount)
+    else:
+        execute = lambda: method(name, card)
+
+    return execute
+
+def run_method(method):
     try:
-        params = [args.a, card]
-        if amount: params.append(amount)
-        result = method(*params)
+        result = method()
         if not result:
             raise Exception('Transaction failed')
     except IOError as e:
