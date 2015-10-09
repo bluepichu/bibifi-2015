@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import Mock
 
 import Crypto
+from bibifi.authfile import Keys
 
 def multi_side_effect(*args):
     effects = iter(args)
@@ -37,10 +38,7 @@ def bad_rsa_key():
 
 @pytest.fixture(scope='session')
 def keys(rsa_key, bad_rsa_key):
-    class Keys:
-        atm = rsa_key
-        bank = bad_rsa_key
-    return Keys()
+    return Keys(rsa_key, bad_rsa_key)
 
 @pytest.fixture
 def sha512():

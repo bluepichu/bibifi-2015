@@ -3,11 +3,25 @@ from bibifi import argparser, validation
 
 from Crypto.Random import random
 from bibifi.net.packet import WritePacket
+from bibifi.authfile import Keys
+from bibifi.currency import Currency
 
 import sys
 import os
 
 def main():
+    args = run_parser(sys.argv)
+
+    if not validate_parameters(args):
+        print_error("Invalid parameters.")
+        print_error("Exiting with code 255...")
+        exit(255)
+
+    auth_keys = Keys.load_from_file(args.s)
+    method = get_method(args, auth_keys)
+    run_method(method)
+
+def run_parser(args):
     parser = argparser.ThrowingArgumentParser(description="Process atm input.")
     parser.add_argument("-s", metavar="<auth-file>", type=str, help="The bank's auth file.  (Default: bank.auth)", default="bank.auth")
     parser.add_argument("-i", metavar="<ip-address>", type=str, help="The bank's IP address.", default="127.0.0.1")
@@ -22,21 +36,10 @@ def main():
     actions.add_argument("-w", metavar="<amount>", type=str, help="Withdraws the given amount from an account.")
     actions.add_argument("-g", action="store_true", help="Gets the balance of an account.")
 
-    args = run_parser()
-
-    if not validate_parameters(args):
-        print_error("Invalid parameters.")
-        print_error("Exiting with code 255...")
-        exit(255)
-
-    auth_keys = Keys.load_from_file(args.s)
-    method = get_method(args, auth_keys)
-    run_method(method)
-
-def run_parser(parser):
     try:
-        args = parser.parse_args()
+        args = parser.parse_args(args)
         if not args.c: args.c = args.a + '.card'
+        return args
     except Exception as err:
         print_error(err)
         print_error("Exiting with code 255...")
