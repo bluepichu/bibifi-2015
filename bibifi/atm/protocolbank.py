@@ -1,14 +1,15 @@
 from bibifi.net.protocol import CreateAccount, Withdraw, Deposit, CheckBalance
 from bibifi.net.packet import read_packet
-from socket import socket
+from bibifi.basebank import BaseBank
+import socket
 import os.path
 import sys
 import json
 
+
 class ProtocolBank(BaseBank):
     def __init__(self, host, port, keys):
-        self.sock = socket()
-        self.sock.create_connection((host, port))
+        self.sock = socket.create_connection((host, port))
         self.sock.settimeout(10)
         self.keys = keys
 
@@ -42,3 +43,7 @@ class ProtocolBank(BaseBank):
         if result:
             print('{"account":%s,"balance":%s'%(json.dumps(name), result))
         return result
+
+    def rollback(self, name): #MISSING!
+        print("ERROR ATTEMPTING TO USE UNDECLARED FUNCTION ROLLBACK");
+        pass

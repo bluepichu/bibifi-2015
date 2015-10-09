@@ -1,6 +1,9 @@
 # TODO implement bank
 
-def Bank(BaseBank):
+from bibifi.basebank import BaseBank
+from abc import ABCMeta, abstractmethod
+
+class Bank(BaseBank):
     def __init__(self):
         pass
 
