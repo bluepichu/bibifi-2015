@@ -1,21 +1,21 @@
 #!/bin/bash
 
 if [ "$@ " == " " ]; then
-	echo "./quickstart <init | startup | shutdown | connect> [vm] [user]"
-	exit
+    echo "./quickstart <init | startup | shutdown | connect> [vm] [user]"
+    exit
 fi
 
 
 if [ "$2" != "" ]; then
-	vm=$2
+    vm=$2
 else
-	vm='bibivm'
+    vm='bibivm'
 fi
 
 if [ "$3" != "" ]; then
-	user=$3
+    user=$3
 else
-	user='bibi'
+    user='bibi'
 fi
 
 echo "VM name is $vm"
@@ -33,8 +33,8 @@ fi
 
 
 if [ "$1" == "startup" ]; then
-	echo "Starting the VM"
-	VBoxManage startvm $vm --type headless
+    echo "Starting the VM"
+    VBoxManage startvm $vm --type headless
 fi
 
 if [ "$1" == "init" ]; then ssh -t $user@localhost -p 3022 'sudo "/root/install/doit.sh"'; fi
@@ -42,11 +42,11 @@ if [ "$1" == "init" ]; then ssh -t $user@localhost -p 3022 'sudo "/root/install/
 if [ "$1" == "connect" ]; then ssh $user@localhost -p 3022; fi
 
 if [ "$1" == "init" ]; then
-	echo "You can add the following to your .ssh/config:"
-	echo "Host $vm"
-	echo "  HostName localhost"
-	echo "  User $user"
-	echo "  Port 3022"
-	echo
-	echo "Then, use \`ssh $vm\` to connect"
+    echo "You can add the following to your .ssh/config:"
+    echo "Host $vm"
+    echo "  HostName localhost"
+    echo "  User $user"
+    echo "  Port 3022"
+    echo
+    echo "Then, use \`ssh $vm\` to connect"
 fi

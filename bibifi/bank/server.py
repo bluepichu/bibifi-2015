@@ -16,7 +16,7 @@ def main():
             print('Invalid arguments', file=sys.stderr)
             exit(255)
 
-        start_server(port, auth_file_path)
+        start_server(args.p, args.s)
     except Exception as e:
         print(e, file=sys.stderr)
         exit(255)

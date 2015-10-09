@@ -67,7 +67,7 @@ class Transaction(ProtocolMethod):
 
         return valid, (name, keycard, amount)
 
-    def send_res(self, s, success, keys):
+    def send_res(self, s, success):
         r = self.make_packet()
         if success:
             r.write_number(1, 1)
@@ -77,7 +77,7 @@ class Transaction(ProtocolMethod):
         self.generate_digest(s, r)
         return r
 
-    def recv_res(self, s, r, keys):
+    def recv_res(self, s, r):
         success = r.read_number(1)
 
         self.validate_digest(s, r)
@@ -112,7 +112,7 @@ class CheckBalance(ProtocolMethod):
 
         return valid, (name, keycard)
 
-    def send_res(self, s, balance, keys):
+    def send_res(self, s, balance):
         r = self.make_packet()
 
         if balance:
@@ -125,7 +125,7 @@ class CheckBalance(ProtocolMethod):
 
         return r
 
-    def recv_res(self, s, r, keys):
+    def recv_res(self, s, r):
         success = r.read_number(1)
         balance = None
 

@@ -46,7 +46,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
         return self.result_queue.get()
 
     def send_packet(self, res_packet):
-        self.request.sendall(res_packet.finish())
+        self.request.sendall(res_packet.finish(self.auth_keys.bank))
 
     def handle(self):
         try:
@@ -62,7 +62,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
             else:
                 result = False
 
-            res_packet = method.send_res(req_packet, result, self.auth_keys)
+            res_packet = method.send_res(req_packet, result)
             self.send_packet(res_packet)
         except IOError as e:
             print('protocol_error')
