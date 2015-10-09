@@ -1,3 +1,4 @@
+from bibifi.currency import Currency
 import re
 import os
 
@@ -13,8 +14,8 @@ def validate_numeric_input(inp):
 	match = numeric_input_regex.match(inp)
 
 	if match:
-		dollars = int(match[1])
-		cents = int(match[2])
+		dollars = int(match.group(1))
+		cents = int(match.group(2))
 
 		amount = Currency(dollars, cents)
 

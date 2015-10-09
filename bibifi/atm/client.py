@@ -35,21 +35,21 @@ def main():
 	bank = ProtocolBank(args.i, args.p, args.s)
 
 	if args.n:
-		amount = validate_numeric_input(args.n)
+		amount = validation.validate_numeric_input(args.n)
 		if not amount or amount.dollars < 10 or not validation.validate_card_file(args.c, exists=False):
 			print_error("Invalid parameters.")
 			print_error("Exiting with code 255...")
 			exit(255)
 		bank.deposit(args.a, args.c, amount)
 	elif args.d:
-		amount = validate_numeric_input(args.d)
+		amount = validationvalidate_numeric_input(args.d)
 		if not amount or (amount.dollars == 0 and amount.cents == 0) or not validation.validate_card_file(args.c):
 			print_error("Invalid parameters.")
 			print_error("Exiting with code 255...")
 			exit(255)
 		bank.deposit(args.a, args.c, amount)
 	elif args.w:
-		amount = validate_numeric_input(args.w)
+		amount = validation.validate_numeric_input(args.w)
 		if not amount or (amount.dollars == 0 and amount.cents == 0) or not validation.validate_card_file(args.c):
 			print_error("Invalid parameters.")
 			print_error("Exiting with code 255...")
@@ -65,7 +65,7 @@ def main():
 		exit(255) # ???
 
 def print_error(*objs):
-    print(*objs, file=sys.stderr)
+	print(*objs, file=sys.stderr)
 
 if __name__ == "__main__":
 	main()

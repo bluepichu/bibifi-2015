@@ -1,4 +1,5 @@
 from enum import Enum, unique
+from bibifi.net.packet import WritePacket, ReadPacket
 
 from .util import generate_nonce
 from Crypto.Cipher import PKCS1_OAEP
@@ -7,7 +8,7 @@ from Crypto.Hash import SHA512, SHA
 class ProtocolMethod:
     def make_packet(self):
         p = WritePacket()
-        p.write_number(methods_types[self.name], 1)
+        p.write_number(method_types[self.name], 1)
         return p
 
     def generate_digest(self, s, r):
