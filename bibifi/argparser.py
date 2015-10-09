@@ -1,8 +1,8 @@
 import argparse
 
 class ArgumentParserError(Exception):
-	pass
+    pass
 
 class ThrowingArgumentParser(argparse.ArgumentParser):
-	def error(self, message):
-		raise ArgumentParserError(message)
+    def error(self, message):
+        raise ArgumentParserError(message)
