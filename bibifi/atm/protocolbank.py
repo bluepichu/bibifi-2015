@@ -1,6 +1,7 @@
 from bibifi.net.protocol import CreateAccount, Withdraw, Deposit, CheckBalance
 from bibifi.net.packet import read_packet
 from bibifi.basebank import BaseBank
+from bibifi.authfile import Keys
 import socket
 import os.path
 import sys
@@ -11,11 +12,12 @@ class ProtocolBank(BaseBank):
     def __init__(self, host, port, keys):
         self.sock = socket.create_connection((host, port))
         self.sock.settimeout(10)
-        self.keys = keys
+        self.key_file = keys
+        self.keys = Keys.load_from_file(self.key_file)
 
     def process_request(self, handler, *args):
         s = handler.send_req(*args)
-        self.sock.sendall(s.finish())
+        self.sock.sendall(s.finish(self.keys.atm))
         r = read_packet(self.sock)
         r.verify_or_raise()
         return handler.recv_res(s, r, self.keys)

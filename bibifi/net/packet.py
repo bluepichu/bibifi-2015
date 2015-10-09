@@ -97,7 +97,8 @@ class WritePacket:
         self.write_number(c.cents, 1)
 
     def get_data(self):
-        return b''.join(self.data_create)
+        return b''.join([bytes(i,"ascii") if type(i) == str else i for i in self.data_create])
+
 
     def get_presign(self):
         inner = self.get_data()

@@ -37,3 +37,4 @@ class Keys:
             auth_file.write(self.atm.exportKey())
             auth_file.write(b'|')
             auth_file.write(self.bank.publickey().exportKey())
+
