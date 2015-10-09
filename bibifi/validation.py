@@ -21,7 +21,6 @@ def validate_card_file(file, exists=True):
         return False
     if os.path.isfile(file) != exists:
         return False
-    # More things probably go here...
     return True
 
 def validate_ip(ip):

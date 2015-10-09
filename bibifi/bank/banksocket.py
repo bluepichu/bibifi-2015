@@ -3,6 +3,7 @@ import threading
 import socketserver
 import sys
 import signal
+import traceback
 
 from queue import Queue
 
@@ -12,13 +13,14 @@ from bibifi.bank.bankhandler import BankRequestStage, BankRequest
 
 class ThreadedHandler(socketserver.BaseRequestHandler):
     def __init__(self, handler, auth_keys, *args):
-        super().__init__(*args)
-        
+
         self.result_queue = Queue(maxsize=1)
         self.finished = False
         self.handler = handler
         self.auth_keys = auth_keys
-        self.finish = None
+        self.finish_type = None
+
+        super().__init__(*args)
 
     @classmethod
     def initializer_with_args(cls, *args):
@@ -27,7 +29,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
         return init
 
     def bank_request(self, type, data, stage):
-        self.handler.requests.push(BankRequest(self, type, data, stage))
+        self.handler.requests.put(BankRequest(self, type, data, stage))
 
     def read_packet(self):
         return read_packet(self.request)
@@ -42,7 +44,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
 
     def send_bank(self, method, data):
         self.bank_request(method.name, data, BankRequestStage.start)
-        self.finish = BankRequestStage.finish_success
+        self.finish_type = BankRequestStage.finish_success
 
     def recv_bank(self):
         return self.result_queue.get()
@@ -61,7 +63,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
 
             if valid:
                 self.send_bank(method, data)
-                req_packet.verify_or_raise()
+                req_packet.verify_or_raise(self.auth_keys.atm)
                 result = self.recv_bank()
             else:
                 result = False
@@ -71,13 +73,14 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
         except IOError as e:
             print('protocol_error')
             print(e, file=sys.stderr)
+            traceback.print_exc()
             sys.stdout.flush()
             self.request.close()
-            self.finish = BankRequestStage.finish_fail
+            self.finish_type = BankRequestStage.finish_fail
         finally:
             self.finished = True
-            if self.finish != None:
-                self.bank_request(method.name, data, self.finish)
+            if self.finish_type != None:
+                self.bank_request(method.name, data, self.finish_type)
 
 class ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
@@ -91,6 +94,7 @@ def listen(host, port, bank_handler, auth_keys):
 
     def handle_terminate():
         server.shutdown()
+        server.server_close()
 
     return handle_terminate
 
