@@ -8,7 +8,7 @@ import sys
 import os
 
 def load_card_file(card_file_path, create=False):
-    if not validation.validate_card_file(card_file_path, exists=not create)
+    if not validation.validate_card_file(card_file_path, exists=not create):
         print_error('Invalid card file')
         exit(255)
     try:
