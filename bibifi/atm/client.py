@@ -27,8 +27,8 @@ def main():
 	if not args.c:
 		args.c = args.a + ".card"
 
-	if not validation.validate_bank_auth_file(args.s) or not validation.validate_ip(args.i) or not validation.validate_port(args.p) or not validation.validate_card_file(args.c) or not validation.validate_name(args.a):
-		print_error("Invalid input.")
+	if not validation.validate_bank_auth_file(args.s) or not validation.validate_ip(args.i) or not validation.validate_port(args.p) or not validation.validate_name(args.a):
+		print_error("Invalid parameters.")
 		print_error("Exiting with code 255...")
 		exit(255)
 
@@ -36,26 +36,30 @@ def main():
 
 	if args.n:
 		amount = validate_numeric_input(args.n)
-		if not amount or amount.dollars < 10:
-			print_error("Invalid amount specified.")
+		if not amount or amount.dollars < 10 or not validation.validate_card_file(args.c, exists=False):
+			print_error("Invalid parameters.")
 			print_error("Exiting with code 255...")
 			exit(255)
 		bank.deposit(args.a, args.c, amount)
 	elif args.d:
 		amount = validate_numeric_input(args.d)
-		if not amount or (amount.dollars == 0 and amount.cents == 0):
-			print_error("Invalid amount specified.")
+		if not amount or (amount.dollars == 0 and amount.cents == 0) or not validation.validate_card_file(args.c):
+			print_error("Invalid parameters.")
 			print_error("Exiting with code 255...")
 			exit(255)
 		bank.deposit(args.a, args.c, amount)
 	elif args.w:
 		amount = validate_numeric_input(args.w)
-		if not amount or (amount.dollars == 0 and amount.cents == 0):
-			print_error("Invalid amount specified.")
+		if not amount or (amount.dollars == 0 and amount.cents == 0) or not validation.validate_card_file(args.c):
+			print_error("Invalid parameters.")
 			print_error("Exiting with code 255...")
 			exit(255)
 		bank.widthdraw(args.a, args.c, amount)
 	elif args.g:
+		if not validation.validate_card_file(args.c):
+			print_error("Invalid parameters.")
+			print_error("Exiting with code 255")
+			exit(255)
 		bank.check_balance(args.a, args.c)
 	else:
 		exit(255) # ???
