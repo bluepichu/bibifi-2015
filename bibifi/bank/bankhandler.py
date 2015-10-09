@@ -52,7 +52,9 @@ class BankHandler:
         return False
 
     def termination_hook(self):
-        self.requests.put(BankRequest.term_request())
+        def terminate():
+            self.requests.put(BankRequest.term_request())
+        return terminate
 
     def serve_forever(self):
         serving = True
