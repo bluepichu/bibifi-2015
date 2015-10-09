@@ -20,7 +20,7 @@ xf = pytest.mark.xfail
     (True, 0, 99, False),
 ])
 def test_validate(succeed, dollars, cents, overflow):
-    assert Currency._Currency__validate(None, dollars, cents, overflow=overflow) == succeed
+    assert Currency._Currency__validate(dollars, cents, overflow=overflow) == succeed
 
 @pytest.mark.parametrize('succeed,inp,out', [
     (True, (323, 23), (323, 23)),
@@ -102,3 +102,23 @@ def test_str(c, result):
 ])
 def test_eq(c1, c2, result):
     assert (c1 == c2) == result
+
+@pytest.mark.parametrize('succeed,overflow,c,s', [
+    (True, True, Currency(0,0), '0.00'),
+    (True, True, Currency(23423, 34), '23423.34'),
+    (True, True, Currency(50,12), '50.12'),
+    (True, True, Currency(1, 1), '1.01'),
+    (False, True, None, '2342834718234923429384231234.27'),
+    (False, False, None, '-234.12'),
+    (False, False, None, '15.234'),
+    (False, False, None, '15.2'),
+    (False, False, None, '.23'),
+    (False, False, None, '00.23'),
+])
+def test_parse(s, c, succeed, overflow):
+    result = Currency.parse(s, overflow=overflow)
+    if result:
+        assert succeed
+        assert result == c
+    else:
+        assert not succeed

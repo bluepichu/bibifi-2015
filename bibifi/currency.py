@@ -1,9 +1,23 @@
+import re
+
 class Currency:
+    numeric_input_regex = re.compile(r'^(0|[1-9]\d*)\.(\d\d)$')
+
     def __init__(self, dollars=0, cents=0):
         self.dollars = dollars + cents // 100
         self.cents = cents % 100
 
-    def __validate(self, dollars, cents, overflow=False):
+    @classmethod
+    def parse(cls, currency_string, overflow=False):
+        match = cls.numeric_input_regex.match(currency_string)
+        if match:
+            dollars = int(match.group(1))
+            cents = int(match.group(2))
+            if cls.__validate(dollars, cents, overflow=overflow):
+                return cls(dollars, cents)
+
+    @staticmethod
+    def __validate(dollars, cents, overflow=False):
         if dollars < 0:
             return False
         if overflow and dollars > 4294967295:
