@@ -10,7 +10,7 @@ import sys
 import os
 
 def main():
-    args = run_parser(sys.argv)
+    args = run_parser(sys.argv[1:])
 
     if not validate_parameters(args):
         print_error("Invalid parameters.")

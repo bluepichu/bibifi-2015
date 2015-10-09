@@ -33,7 +33,7 @@ class ChTemporaryDirectory(tempfile.TemporaryDirectory):
 def test_client(argv,params,keys,error_code):
     method_name, host, port, authfile, cardfile, createcard, name, amount = params
     card = b'12342384728374823718273482134'
-    with ChTemporaryDirectory(), patch('bibifi.atm.client.ProtocolBank') as Bank, patch('bibifi.atm.client.sys.argv', argv.split()), patch('builtins.exit') as exiter:
+    with ChTemporaryDirectory(), patch('bibifi.atm.client.ProtocolBank') as Bank, patch('bibifi.atm.client.sys.argv', ['atm']+argv.split()), patch('builtins.exit') as exiter:
         exiter.side_effect = Exception('Exited incorrectly')
 
         bank = Mock()
