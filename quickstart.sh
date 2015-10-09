@@ -21,7 +21,7 @@ fi
 echo "VM name is $vm"
 echo "VM user is $user"
 
-if [ "$1" == "shutdown" ]; then VBoxManage controlvm $vm savestate; exit; fi 
+if [ "$1" == "shutdown" ]; then VBoxManage controlvm $vm acpipowerbutton; exit; fi 
 
 if VBoxManage showvminfo $vm | grep 'name = ssh' > /dev/null
 then
