@@ -18,6 +18,10 @@ class BankRequest:
         self.data = data
         self.stage = stage
 
+    def __eq__(self, b):
+        if not isinstance(b, BankRequest): return False
+        return (self.holder, self.type, self.data, self.stage) == (b.holder, b.type, b.data, b.stage)
+
     @classmethod
     def term_request(cls):
         return cls(None, None, None, stage=BankRequestStage.term)
