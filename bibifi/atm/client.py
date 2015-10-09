@@ -1,6 +1,30 @@
 from bibifi.atm.protocolbank import ProtocolBank
 from bibifi import argparser, validation
+
+from Crypto.Random import random
+from bibifi.net.packet import WritePacket
+
 import sys
+import os
+
+def load_card_file(card_file_path, create=False):
+    if not validation.validate_card_file(card_file_path, exists=not create)
+        print_error('Invalid card file')
+        exit(255)
+    try:
+        if create:
+            p = WritePacket()
+            p.write_number(random.getrandbits(512), 64)
+            card = p.get_data()
+            with open(card_file_path, 'wb') as f:
+                f.write(card)
+            return card
+        else:
+            with open(card_file_path, 'rb') as f:
+                return f.read()
+    except Exception as e:
+        print_error('Failed to get card file', e)
+        exit(255)
 
 def main():
     parser = argparser.ThrowingArgumentParser(description="Process atm input.")
@@ -27,45 +51,61 @@ def main():
     if not args.c:
         args.c = args.a + ".card"
 
-    if not validation.validate_bank_auth_file(args.s) or not validation.validate_ip(args.i) or not validation.validate_port(args.p) or not validation.validate_name(args.a):
+    auth_keys = Keys.load_from_file(args.s)
+
+    if not validation.validate_ip(args.i) or not validation.validate_port(args.p) or not validation.validate_name(args.a):
         print_error("Invalid parameters.")
         print_error("Exiting with code 255...")
         exit(255)
 
-    bank = ProtocolBank(args.i, args.p, args.s)
+    bank = ProtocolBank(args.i, args.p, auth_keys)
 
     if args.n:
         amount = Currency.parse(args.n)
-        if not amount or amount.dollars < 10 or not validation.validate_card_file(args.c, exists=False):
-            print_error("Invalid parameters.")
-            print_error("Exiting with code 255...")
+        card = load_card_file(args.c, create=True)
+        if not amount or amount.dollars < 10:
+            print_error("Invalid amount.")
             exit(255)
-        bank.create_account(args.a, args.c, amount)
+
+        method = bank.create_account
+        on_failure = lambda: os.remove(args.c)
     elif args.d:
         amount = Currency.parse(args.d)
-        if not amount or (amount.dollars == 0 and amount.cents == 0) or not validation.validate_card_file(args.c):
-            print_error("Invalid parameters.")
-            print_error("Exiting with code 255...")
+        card = load_card_file(args.c)
+        if not amount or (amount.dollars == 0 and amount.cents == 0):
+            print_error("Invalid amount.")
             exit(255)
-        bank.deposit(args.a, args.c, amount)
+
+        method = bank.deposit
     elif args.w:
         amount = Currency.parse(args.w)
-        if not amount or (amount.dollars == 0 and amount.cents == 0) or not validation.validate_card_file(args.c):
-            print_error("Invalid parameters.")
-            print_error("Exiting with code 255...")
+        card = load_card_file(args.c)
+        if not amount or (amount.dollars == 0 and amount.cents == 0):
+            print_error("Invalid amount.")
             exit(255)
-        bank.widthdraw(args.a, args.c, amount)
+
+        method = bank.withdraw
     elif args.g:
-        if not validation.validate_card_file(args.c):
-            print_error("Invalid parameters.")
-            print_error("Exiting with code 255")
-            exit(255)
-        bank.check_balance(args.a, args.c)
+        amount = None
+        card = load_card_file(args.c)
+        method = bank.check_balance
     else:
         exit(255) # ???
 
+    try:
+        params = [args.a, card]
+        if amount: params.append(amount)
+        result = method(*params)
+        if not result:
+            raise Exception('Transaction failed')
+    except IOError as e:
+        if on_failure: on_failure()
+        print_error(e)
+        exit(63)
+    except Exception as e:
+        if on_failure: on_failure()
+        print_error(e)
+        exit(255)
+
 def print_error(*objs):
     print(*objs, file=sys.stderr)
-
-if __name__ == "__main__":
-    main()
