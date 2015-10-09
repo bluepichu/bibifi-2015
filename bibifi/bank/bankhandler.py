@@ -22,6 +22,9 @@ class BankRequest:
         if not isinstance(b, BankRequest): return False
         return (self.holder, self.type, self.data, self.stage) == (b.holder, b.type, b.data, b.stage)
 
+    def __str__(self):
+        return 'BankRequest(%s, %s, %s, %s)'%(self.holder, self.type, self.data, self.stage)
+
     @classmethod
     def term_request(cls):
         return cls(None, None, None, stage=BankRequestStage.term)
@@ -37,8 +40,10 @@ class BankHandler:
         lock_deque = self.account_locks[name]
         if request.stage == BankRequestStage.start:
             if not lock_deque or lock_deque[0].holder == request.holder:
+                if not lock_deque:
+                    lock_deque.append(request)
                 result = getattr(self.impl, request.type)(*request.data)
-                request.holder.result_queue.push(result, block=False)
+                request.holder.result_queue.put(result, block=False)
                 return True
         elif request.stage == BankRequestStage.finish_fail or request.stage == BankRequestStage.finish_success:
             if lock_deque and lock_deque[0].holder == request.holder:
@@ -61,9 +66,12 @@ class BankHandler:
         while True:
             try:
                 request = self.requests.get(block=serving)
-            except queue.Empty:
+                print(request, serving)
+            except queue.Empty as e:
+                print('queue Empty', e)
                 break
             if request.stage == BankRequestStage.term:
+                print('Done serving')
                 serving = False
                 continue
             if not self.handle(request):

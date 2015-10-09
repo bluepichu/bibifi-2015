@@ -34,14 +34,15 @@ class Bank(BaseBank):
     '''
     def create_account(self, name, keycard, balance):
         if name in self.balances: return False
-        if keycard in keycards: return False
+        if keycard in self.keycards: return False
         if balance.dollars < 10: return False
         if not balance.validate(overflow=True): return False
 
-        self.balances[name] = dict(
+        self.balances[name] = {
             'keycard': keycard,
             'balance': balance, 
-            'rollback': None)
+            'rollback': None,
+        }
         self.keycards.add(keycard)
         self.balances[name]['rollback'] = {'function': 'create'}
 
