@@ -83,16 +83,16 @@ def test_request(protocol_method, protocol_method_request_args):
     assert results == tuple(args)
 
 @pytest.mark.parametrize('protocol_method_return_value', list(range(6)), indirect=['protocol_method_return_value'])
-def test_response(protocol_method, keys, protocol_method_return_value):
+def test_response(protocol_method, protocol_method_return_value):
     if protocol_method_return_value == None:
         return
     s = create_read_packet(generate_data(64))
 
-    r = protocol_method.send_res(s, protocol_method_return_value, keys)
+    r = protocol_method.send_res(s, protocol_method_return_value)
 
     rr = create_read_packet(r.get_data())
     assert rr.read_number(1) == protocol.method_types[protocol_method.name]
 
-    result = protocol_method.recv_res(s, rr, keys)
+    result = protocol_method.recv_res(s, rr)
     assert not protocol_method_return_value and not result or protocol_method_return_value == result
 
