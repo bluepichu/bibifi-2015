@@ -104,9 +104,9 @@ def get_method(args, auth_keys):
     elif args.g:
         amount = None
         card = load_card_file(args.c)
-        if args.g >1:
-            print_error("More than 1 -g flag.")
-            exit(255)
+        if args.g > 1:
+            raise Exception("More than 1 -g flag")
+
         method_name = 'check_balance'
     else:
         raise ValueError('Unknown argument')
