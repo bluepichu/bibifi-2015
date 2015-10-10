@@ -10,17 +10,34 @@ import sys
 import os
 import traceback
 
-def main():
-    args = run_parser(sys.argv[1:])
+failure_hooks = []
+failure_trace = False
 
-    if not validate_parameters(args):
-        print_error("Invalid parameters.")
-        print_error("Exiting with code 255...")
+def main():    
+    try:
+        args = run_parser(sys.argv[1:])
+
+        if not validate_parameters(args):
+            raise Exception('Invalid parameters')
+
+        auth_keys = Keys.load_from_file(args.s)
+        method = get_method(args, auth_keys)
+        run_method(method)
+    except IOError as e:
+        handle_failure()
+        exit(63)
+    except Exception as e:
+        handle_failure()
         exit(255)
 
-    auth_keys = Keys.load_from_file(args.s)
-    method, on_failure = get_method(args, auth_keys)
-    run_method(method, on_failure)
+def handle_failure():
+    if failure_trace: traceback.print_exc(file=sys.stderr)
+    for method in failure_hooks:
+        try:
+            method()
+        except:
+            print('Error on failure hook', file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
 
 def run_parser(args):
     parser = argparser.ThrowingArgumentParser(description="Process atm input.")
@@ -35,38 +52,29 @@ def run_parser(args):
     actions.add_argument("-n", metavar="<balance>", type=str, help="Creates a new account with the given inital balance.")
     actions.add_argument("-d", metavar="<amount", help="Deposits the given amount into an account.")
     actions.add_argument("-w", metavar="<amount>", type=str, help="Withdraws the given amount from an account.")
-    actions.add_argument("-g", action="store_true", help="Gets the balance of an account.")
+    actions.add_argument("-g", action="count", help="Gets the balance of an account.")
 
-    try:
-        args = parser.parse_args(args)
-        if not args.c: args.c = args.a + '.card'
-        return args
-    except Exception as err:
-        print_error(err)
-        print_error("Exiting with code 255...")
-        exit(255)
+    args = parser.parse_args(args)
+    if not args.c: args.c = args.a + '.card'
+    return args
 
 def validate_parameters(args):
     return validation.validate_ip(args.i) and validation.validate_port(args.p) and validation.validate_name(args.a)
 
 def load_card_file(card_file_path, create=False):
     if not validation.validate_card_file(card_file_path, exists=not create):
-        print_error('Invalid card file')
-        exit(255)
-    try:
-        if create:
-            p = WritePacket()
-            p.write_number(random.getrandbits(512), 64)
-            card = p.get_data()
-            with open(card_file_path, 'wb') as f:
-                f.write(card)
-            return card
-        else:
-            with open(card_file_path, 'rb') as f:
-                return f.read()
-    except Exception as e:
-        print_error('Failed to get card file', e)
-        exit(255)
+        raise Exception('Invalid card file')
+    if create:
+        p = WritePacket()
+        p.write_number(random.getrandbits(512), 64)
+        card = p.get_data()
+        with open(card_file_path, 'wb') as f:
+            failure_hooks.append(lambda: os.remove(card_file_path))
+            f.write(card)
+        return card
+    else:
+        with open(card_file_path, 'rb') as f:
+            return f.read()
 
 def get_method(args, auth_keys):
     on_failure = lambda: None
@@ -76,33 +84,32 @@ def get_method(args, auth_keys):
         amount = Currency.parse(args.n)
         card = load_card_file(args.c, create=True)
         if not amount or amount.dollars < 10:
-            print_error("Invalid amount.")
-            exit(255)
+            raise Exception('Invalid amount')
 
         method_name = 'create_account'
-        on_failure = lambda: os.remove(args.c)
     elif args.d:
         amount = Currency.parse(args.d)
         card = load_card_file(args.c)
         if not amount or (amount.dollars == 0 and amount.cents == 0) or not amount.validate(overflow=True):
-            print_error("Invalid amount.")
-            exit(255)
+            raise Exception('Invalid amount')
 
         method_name = 'deposit'
     elif args.w:
         amount = Currency.parse(args.w)
         card = load_card_file(args.c)
         if not amount or (amount.dollars == 0 and amount.cents == 0) or not amount.validate(overflow=True):
-            print_error("Invalid amount.")
-            exit(255)
+            raise Exception('Invalid amount')
 
         method_name = 'withdraw'
     elif args.g:
         amount = None
         card = load_card_file(args.c)
+        if args.g > 1:
+            raise Exception("More than 1 -g flag")
+
         method_name = 'check_balance'
     else:
-        exit(255) # ???
+        raise ValueError('Unknown argument')
 
     name = args.a
 
@@ -114,21 +121,13 @@ def get_method(args, auth_keys):
     else:
         execute = lambda: method(name, card)
 
-    return execute, on_failure
+    return execute
 
-def run_method(method, on_failure):
-    try:
-        result = method()
-        if not result:
-            raise Exception('Transaction failed')
-    except IOError as e:
-        if on_failure: on_failure()
-        traceback.print_exc(file=sys.stderr)
-        exit(63)
-    except Exception as e:
-        if on_failure: on_failure()
-        traceback.print_exc(file=sys.stderr)
-        exit(255)
+def run_method(method):
+    result = method()
+    if not result:
+        raise Exception('Transaction failed')
 
 def print_error(*objs):
     print(*objs, file=sys.stderr)
+
