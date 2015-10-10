@@ -84,7 +84,7 @@ def get_method(args, auth_keys):
     elif args.d:
         amount = Currency.parse(args.d)
         card = load_card_file(args.c)
-        if not amount or (amount.dollars == 0 and amount.cents == 0):
+        if not amount or (amount.dollars == 0 and amount.cents == 0) or not amount.validate(overflow=True):
             print_error("Invalid amount.")
             exit(255)
 
@@ -92,7 +92,7 @@ def get_method(args, auth_keys):
     elif args.w:
         amount = Currency.parse(args.w)
         card = load_card_file(args.c)
-        if not amount or (amount.dollars == 0 and amount.cents == 0):
+        if not amount or (amount.dollars == 0 and amount.cents == 0) or not amount.validate(overflow=True):
             print_error("Invalid amount.")
             exit(255)
 
