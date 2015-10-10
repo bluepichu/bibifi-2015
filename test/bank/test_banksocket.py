@@ -9,7 +9,8 @@ from bibifi.bank.bankhandler import BankRequestStage, BankRequest
 @pytest.fixture
 def threaded_handler(keys):
     handler = Mock()
-    return handler, ThreadedHandler(handler, keys)
+    with patch('builtins.super'):
+        return handler, ThreadedHandler(handler, keys, None, None, None)
 
 @pytest.mark.parametrize('success,number', [
     (True, 1),
@@ -40,8 +41,8 @@ def test_send_bank(threaded_handler):
     bank, handler = threaded_handler
 
     handler.send_bank(SpecialMethod(), u2)
-    bank.requests.push.assert_called_with(BankRequest(handler, u1, u2, BankRequestStage.start))
-    assert handler.finish == BankRequestStage.finish_success
+    bank.requests.put.assert_called_with(BankRequest(handler, u1, u2, BankRequestStage.start))
+    assert handler.finish_type == BankRequestStage.finish_success
 
 def test_recv_bank(threaded_handler):
     _, handler = threaded_handler
@@ -85,7 +86,7 @@ def test_handle_valid():
     main.get_method.assert_called_once_with(req_packet)
     method.recv_req.assert_called_once_with(req_packet)
     main.send_bank.assert_called_once_with(method, data)
-    req_packet.verify_or_raise.assert_called_once_with()
+    req_packet.verify_or_raise.assert_called_once_with(main.auth_keys.atm)
     main.recv_bank.assert_called_once_with()
     assert method.send_res.called
     main.send_packet.assert_called_once_with(res_packet)
@@ -106,7 +107,7 @@ def test_handle_throws(capsys):
     main.get_method.assert_called_once_with(req_packet)
     method.recv_req.assert_called_once_with(req_packet)
     main.send_bank.assert_called_once_with(method, data)
-    req_packet.verify_or_raise.assert_called_once_with()
+    req_packet.verify_or_raise.assert_called_once_with(main.auth_keys.atm)
     main.recv_bank.assert_called_once_with()
     assert method.send_res.called
     main.send_packet.assert_called_once_with(res_packet)

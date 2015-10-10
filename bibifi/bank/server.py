@@ -4,6 +4,7 @@ from bibifi import validation, argparser
 
 import sys
 import signal
+import traceback
 
 def main():
     parser = argparser.ThrowingArgumentParser()
@@ -19,10 +20,9 @@ def main():
 
         start_server(args.p, args.s)
     except Exception as e:
-        print(e, file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         exit(255)
 
-# port and auth_file_path should be validated
 def start_server(port, auth_file_path):
     def sigterm_hook(signum, stack_frame):
         if signum == signal.SIGINT:
@@ -30,6 +30,7 @@ def start_server(port, auth_file_path):
         print(signum)
         term_socket()
         term_handler()
+        print('Finished terminating', file=sys.stderr)
 
     auth_keys = Keys.random()
     auth_keys.export_auth_file(auth_file_path)

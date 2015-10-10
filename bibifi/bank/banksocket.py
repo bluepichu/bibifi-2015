@@ -13,7 +13,6 @@ from bibifi.bank.bankhandler import BankRequestStage, BankRequest
 
 class ThreadedHandler(socketserver.BaseRequestHandler):
     def __init__(self, handler, auth_keys, *args):
-
         self.result_queue = Queue(maxsize=1)
         self.finished = False
         self.handler = handler
@@ -72,12 +71,12 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
             self.send_packet(res_packet)
         except IOError as e:
             print('protocol_error')
-            print(e, file=sys.stderr)
-            traceback.print_exc()
+            traceback.print_exc(file=sys.stderr)
             sys.stdout.flush()
-            self.request.close()
             self.finish_type = BankRequestStage.finish_fail
         finally:
+            self.request.shutdown(socket.SHUT_RDWR)
+            self.request.close()
             self.finished = True
             if self.finish_type != None:
                 self.bank_request(method.name, data, self.finish_type)

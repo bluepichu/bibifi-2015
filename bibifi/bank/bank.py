@@ -19,14 +19,13 @@ class Bank(BaseBank):
         if function == 'create':
             self.keycards.remove(self.balances[name]['keycard'])
             del self.balances[name]
-
-        amount = self.balances[name]['rollback']['amount']
-        if function == 'deposit':
-            self.withdraw(name, self.balances[name]['keycard'], amount)
-        if function == 'withdraw':
-            self.deposit(name, self.balances[name]['keycard'], amount)
-
-        self.balances[name]['rollback'] = None
+        else:
+            amount = self.balances[name]['rollback']['amount']
+            if function == 'deposit':
+                self.withdraw(name, self.balances[name]['keycard'], amount)
+            if function == 'withdraw':
+                self.deposit(name, self.balances[name]['keycard'], amount)
+            self.balances[name]['rollback'] = None
         return True
 
     '''
