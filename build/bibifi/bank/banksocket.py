@@ -52,6 +52,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
         self.request.sendall(res_packet.finish(self.auth_keys.bank))
 
     def handle(self):
+        self.request.settimeout(10)
         method = None
         data = None
         started = False
