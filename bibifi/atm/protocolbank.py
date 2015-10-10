@@ -9,15 +9,17 @@ import json
 
 class ProtocolBank(BaseBank):
     def __init__(self, host, port, keys):
-        self.sock = socket.create_connection((host, port), 10)
+        self.sock = socket.create_connection((host, port))
+        self.sock.settimeout(10)
         self.keys = keys
 
     def process_request(self, handler, *args):
         s = handler.send_req(*args)
         self.sock.sendall(s.finish(self.keys.atm))
         r = read_packet(self.sock)
-        r.verify_or_raise()
-        return handler.recv_res(s, r, self.keys)
+        r.verify_or_raise(self.keys.bank)
+        r.read_number(1)
+        return handler.recv_res(s, r)
 
     def rollback(self, name):
         raise NotImplementedError()

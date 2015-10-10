@@ -8,6 +8,7 @@ from bibifi.currency import Currency
 
 import sys
 import os
+import traceback
 
 def main():
     args = run_parser(sys.argv[1:])
@@ -18,8 +19,8 @@ def main():
         exit(255)
 
     auth_keys = Keys.load_from_file(args.s)
-    method = get_method(args, auth_keys)
-    run_method(method)
+    method, on_failure = get_method(args, auth_keys)
+    run_method(method, on_failure)
 
 def run_parser(args):
     parser = argparser.ThrowingArgumentParser(description="Process atm input.")
@@ -69,6 +70,7 @@ def load_card_file(card_file_path, create=False):
 
 def get_method(args, auth_keys):
     bank = ProtocolBank(args.i, args.p, auth_keys)
+    on_failure = lambda: None
 
     if args.n:
         amount = Currency.parse(args.n)
@@ -109,20 +111,20 @@ def get_method(args, auth_keys):
     else:
         execute = lambda: method(name, card)
 
-    return execute
+    return execute, on_failure
 
-def run_method(method):
+def run_method(method, on_failure):
     try:
         result = method()
         if not result:
             raise Exception('Transaction failed')
     except IOError as e:
         if on_failure: on_failure()
-        print_error(e)
+        traceback.print_exc(sys.stderr)
         exit(63)
     except Exception as e:
         if on_failure: on_failure()
-        print_error(e)
+        traceback.print_exc(sys.stderr)
         exit(255)
 
 def print_error(*objs):
