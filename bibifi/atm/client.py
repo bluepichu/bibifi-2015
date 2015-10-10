@@ -69,8 +69,8 @@ def load_card_file(card_file_path, create=False):
         exit(255)
 
 def get_method(args, auth_keys):
-    bank = ProtocolBank(args.i, args.p, auth_keys)
     on_failure = lambda: None
+    method_name = None
 
     if args.n:
         amount = Currency.parse(args.n)
@@ -79,7 +79,7 @@ def get_method(args, auth_keys):
             print_error("Invalid amount.")
             exit(255)
 
-        method = bank.create_account
+        method_name = 'create_account'
         on_failure = lambda: os.remove(args.c)
     elif args.d:
         amount = Currency.parse(args.d)
@@ -88,7 +88,7 @@ def get_method(args, auth_keys):
             print_error("Invalid amount.")
             exit(255)
 
-        method = bank.deposit
+        method_name = 'deposit'
     elif args.w:
         amount = Currency.parse(args.w)
         card = load_card_file(args.c)
@@ -96,15 +96,18 @@ def get_method(args, auth_keys):
             print_error("Invalid amount.")
             exit(255)
 
-        method = bank.withdraw
+        method_name = 'withdraw'
     elif args.g:
         amount = None
         card = load_card_file(args.c)
-        method = bank.check_balance
+        method_name = 'check_balance'
     else:
         exit(255) # ???
 
     name = args.a
+
+    bank = ProtocolBank(args.i, args.p, auth_keys)
+    method = getattr(bank, method_name)
 
     if amount:
         execute = lambda: method(name, card, amount)
