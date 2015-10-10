@@ -26,7 +26,8 @@ def main():
 def start_server(port, auth_file_path):
     def sigterm_hook(signum, stack_frame):
         if signum == signal.SIGINT:
-            print("VERY BAD. CHANGE THIS")
+            print('Ignoring sigint', file=sys.stderr)
+            return
         term_socket()
         term_handler()
         print('Finished terminating', file=sys.stderr)
