@@ -106,7 +106,7 @@ def get_method(args, auth_keys):
         card = load_card_file(args.c)
         method_name = 'check_balance'
     else:
-		raise ValueError('Unknown argument')
+        raise ValueError('Unknown argument')
 
     name = args.a
 
