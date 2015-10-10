@@ -20,8 +20,9 @@ class ProtocolBank(BaseBank):
         r.read_number(1)
         return handler.recv_res(s, r)
 
-    def rollback(self, name):
-        raise NotImplementedError()
+    def finalize(self, name, success):
+        if not success:
+            raise ValueError('Cannot fail on the protocolbank')
 
     def create_account(self, name, keycard, balance):
         result = self.process_request(CreateAccount(), name, keycard, balance)

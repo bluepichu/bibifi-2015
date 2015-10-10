@@ -48,8 +48,7 @@ class BankHandler:
         elif request.stage == BankRequestStage.finish_fail or request.stage == BankRequestStage.finish_success:
             if lock_deque and lock_deque[0].holder == request.holder:
                 lock_deque.popleft()
-                if request.stage == BankRequestStage.finish_fail:
-                    self.impl.rollback(name)
+                self.impl.finalize(name, request.stage == BankRequestStage.finish_success)
                 return True
             else:
                 raise Exception('Finish request that is not locked')
@@ -66,12 +65,9 @@ class BankHandler:
         while True:
             try:
                 request = self.requests.get(block=serving)
-                print(request, serving)
             except queue.Empty as e:
-                print('queue Empty', e)
                 break
             if request.stage == BankRequestStage.term:
-                print('Done serving')
                 serving = False
                 continue
             if not self.handle(request):

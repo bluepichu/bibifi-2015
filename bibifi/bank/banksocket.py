@@ -54,6 +54,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
     def handle(self):
         method = None
         data = None
+        started = False
         try:
             req_packet = self.read_packet()
             method = self.get_method(req_packet)
@@ -62,6 +63,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
 
             if valid:
                 self.send_bank(method, data)
+                started = True
                 req_packet.verify_or_raise(self.auth_keys.atm)
                 result = self.recv_bank()
             else:
@@ -75,10 +77,13 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
             sys.stdout.flush()
             self.finish_type = BankRequestStage.finish_fail
         finally:
-            self.request.shutdown(socket.SHUT_RDWR)
-            self.request.close()
+            try:
+                self.request.shutdown(socket.SHUT_RDWR)
+                self.request.close()
+            except:
+                traceback.print_exc(file=sys.stderr)
             self.finished = True
-            if self.finish_type != None:
+            if self.finish_type != None and started and method:
                 self.bank_request(method.name, data, self.finish_type)
 
 class ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):

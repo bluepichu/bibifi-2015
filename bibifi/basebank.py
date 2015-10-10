@@ -15,7 +15,7 @@ class BaseBank(metaclass=ABCMeta):
         Rolls back the most recent transaction for the account. Only needs to store one transaction
     '''
     @abstractmethod
-    def rollback(self, name):
+    def finalize(self, name, success):
         pass
 
     '''
