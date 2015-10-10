@@ -1,3 +1,5 @@
+.PHONY: all test clean
+
 all:
 
 clean:
@@ -5,3 +7,4 @@ clean:
 
 test:
 	python3 -m pytest
+
