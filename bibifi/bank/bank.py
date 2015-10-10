@@ -1,6 +1,7 @@
-import json
-
 from bibifi.basebank import BaseBank
+
+import json
+import sys
 
 class Bank(BaseBank):
     def __init__(self):
@@ -10,22 +11,31 @@ class Bank(BaseBank):
     '''
     Rolls back the most recent transaction for the account. Only needs to store one transaction
     '''
-    def rollback(self, name):
+    def finalize(self, name, success):
         if not name in self.balances: return False
         if not self.balances[name]['rollback']: return False
 
         function = self.balances[name]['rollback']['function']
 
-        if function == 'create':
-            self.keycards.remove(self.balances[name]['keycard'])
-            del self.balances[name]
+        if success:
+            print(self.balances[name]['rollback']['result'])
+            sys.stdout.flush()
         else:
-            amount = self.balances[name]['rollback']['amount']
-            if function == 'deposit':
-                self.withdraw(name, self.balances[name]['keycard'], amount)
-            if function == 'withdraw':
-                self.deposit(name, self.balances[name]['keycard'], amount)
+            if function == 'create':
+                self.keycards.remove(self.balances[name]['keycard'])
+                del self.balances[name]
+            elif function == 'check_balance':
+                pass
+            else:
+                amount = self.balances[name]['rollback']['amount']
+                if function == 'deposit':
+                    self.withdraw(name, self.balances[name]['keycard'], amount)
+                if function == 'withdraw':
+                    self.deposit(name, self.balances[name]['keycard'], amount)
+
+        if name in self.balances:
             self.balances[name]['rollback'] = None
+
         return True
 
     '''
@@ -43,9 +53,11 @@ class Bank(BaseBank):
             'rollback': None,
         }
         self.keycards.add(keycard)
-        self.balances[name]['rollback'] = {'function': 'create'}
+        self.balances[name]['rollback'] = {
+            'function': 'create',
+            'result': '{"account":%s,"initial_balance":%s}'%(json.dumps(name), balance),
+        }
 
-        print('{"account":%s,"initial_balance":%s'%(json.dumps(name), balance))
         return True
 
     '''
@@ -59,8 +71,11 @@ class Bank(BaseBank):
         result = self.balances[name]['balance'].add(amount)
         if not result: return False
 
-        self.balances[name]['rollback'] = {'function': 'deposit', 'amount': amount}
-        print('{"account":%s,"deposit":%s'%(json.dumps(name), amount))
+        self.balances[name]['rollback'] = {
+            'function': 'deposit',
+            'amount': amount,
+            'result': '{"account":%s,"deposit":%s}'%(json.dumps(name), amount),
+        }
         return True
 
     '''
@@ -74,8 +89,11 @@ class Bank(BaseBank):
         result = self.balances[name]['balance'].sub(amount)
         if not result: return False
 
-        self.balances[name]['rollback'] = {'function': 'withdraw', 'amount': amount}
-        print('{"account":%s,"withdraw":%s'%(json.dumps(name), amount))
+        self.balances[name]['rollback'] = {
+            'function': 'withdraw',
+            'amount': amount,
+            'result': '{"account":%s,"withdraw":%s}'%(json.dumps(name), amount),
+        }
         return True
 
     '''
@@ -86,5 +104,8 @@ class Bank(BaseBank):
         if self.balances[name]['keycard'] != keycard: return False
 
         result = self.balances[name]['balance']
-        print('{"account":%s,"balance":%s'%(json.dumps(name), result))
+        self.balances[name]['rollback'] = {
+            'function': 'check_balance',
+            'result': '{"account":%s,"balance":%s}'%(json.dumps(name), result),
+        }
         return result

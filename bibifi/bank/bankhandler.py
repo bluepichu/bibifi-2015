@@ -48,8 +48,7 @@ class BankHandler:
         elif request.stage == BankRequestStage.finish_fail or request.stage == BankRequestStage.finish_success:
             if lock_deque and lock_deque[0].holder == request.holder:
                 lock_deque.popleft()
-                if request.stage == BankRequestStage.finish_fail:
-                    self.impl.rollback(name)
+                self.impl.finalize(name, request.stage == BankRequestStage.finish_success)
                 return True
             else:
                 raise Exception('Finish request that is not locked')
