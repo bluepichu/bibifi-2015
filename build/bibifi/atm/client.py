@@ -52,7 +52,7 @@ def run_parser(args):
     actions.add_argument("-n", metavar="<balance>", type=str, help="Creates a new account with the given inital balance.")
     actions.add_argument("-d", metavar="<amount", help="Deposits the given amount into an account.")
     actions.add_argument("-w", metavar="<amount>", type=str, help="Withdraws the given amount from an account.")
-    actions.add_argument("-g", action="store_true", help="Gets the balance of an account.")
+    actions.add_argument("-g", action="count", help="Gets the balance of an account.")
 
     args = parser.parse_args(args)
     if not args.c: args.c = args.a + '.card'
@@ -104,6 +104,9 @@ def get_method(args, auth_keys):
     elif args.g:
         amount = None
         card = load_card_file(args.c)
+        if args.g >1:
+            print_error("More than 1 -g flag.")
+            exit(255)
         method_name = 'check_balance'
     else:
         raise ValueError('Unknown argument')
