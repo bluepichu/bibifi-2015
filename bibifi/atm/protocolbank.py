@@ -9,8 +9,7 @@ import json
 
 class ProtocolBank(BaseBank):
     def __init__(self, host, port, keys):
-        self.sock = socket.create_connection((host, port))
-        self.sock.settimeout(10)
+        self.sock = socket.create_connection((host, port), 10)
         self.keys = keys
 
     def process_request(self, handler, *args):

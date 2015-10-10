@@ -120,11 +120,11 @@ def run_method(method, on_failure):
             raise Exception('Transaction failed')
     except IOError as e:
         if on_failure: on_failure()
-        traceback.print_exc(sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         exit(63)
     except Exception as e:
         if on_failure: on_failure()
-        traceback.print_exc(sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         exit(255)
 
 def print_error(*objs):
