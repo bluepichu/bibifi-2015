@@ -99,17 +99,12 @@ class WritePacket:
     def get_data(self):
         return b''.join(self.data_create)
 
-    def get_presign(self):
-        inner = self.get_data()
-        count = len(inner)
-        return struct.pack('>I', count) + inner
-
     def finish(self, key):
-        presign = self.get_presign()
+        data = self.get_data()
 
         h = SHA512.new()
-        h.update(presign)
+        h.update(data)
         signer = PKCS1_PSS.new(key)
         sig = signer.sign(h)
 
-        return struct.pack('>I', len(presign)+len(sig)+4) + presign + sig
+        return struct.pack('>II', len(data)+len(sig)+8, len(data)) + data + sig

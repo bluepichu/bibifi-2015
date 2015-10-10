@@ -285,9 +285,8 @@ class TestWritePacket:
 
     def test_finish(self, rsa_key, signer, sha512):
         data = generate_data(50)
-        presign = struct.pack('>I', len(data)) + data
 
-        sha512.update(presign)
+        sha512.update(data)
 
         p = WritePacket()
         p.write(data)
