@@ -50,3 +50,4 @@ if [ "$1" == "init" ]; then
     echo
     echo "Then, use \`ssh $vm\` to connect"
 fi
+
