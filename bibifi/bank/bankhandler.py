@@ -65,12 +65,9 @@ class BankHandler:
         while True:
             try:
                 request = self.requests.get(block=serving)
-                print(request, serving)
             except queue.Empty as e:
-                print('queue Empty', e)
                 break
             if request.stage == BankRequestStage.term:
-                print('Done serving')
                 serving = False
                 continue
             if not self.handle(request):
