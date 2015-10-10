@@ -87,7 +87,8 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
                 self.bank_request(method.name, data, self.finish_type)
 
 class ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    pass
+    daemon_threads = True
+    allow_reuse_address = True
 
 def listen(host, port, bank_handler, auth_keys):
     server = ThreadedServer((host, port),
