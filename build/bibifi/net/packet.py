@@ -1,8 +1,8 @@
 import struct
 from Crypto.Hash import SHA512
 from Crypto.Cipher import PKCS1_OAEP, AES
-from Crypto.Random.random import getrandbits
 from Crypto.Signature import PKCS1_PSS
+from Crypto import Random
 from bibifi.currency import Currency
 
 def read_packet(sock, pem):
@@ -24,20 +24,23 @@ def read_packet(sock, pem):
 
 class ReadPacket:
     def __init__(self, data, pem):
+
+        off = 256+4+16
+
         self.pem = pem
-        if len(data) < 268:
+        if len(data) < off+8:
             raise IOError('Packet too small')
-        self.outer_size = struct.unpack('>I', data[:4])
-
-        eaeskey = data[4:260]
-        enc = data[260:]
+        self.outer_size, = struct.unpack('>I', data[:4])
+        self.iv = data[4:20]
+        eaeskey = data[20:off]
+        enc = data[off:]
         cipher = PKCS1_OAEP.new(pem)
-        self.aeskey = int(cipher.decrypt(eaeskey))
+        self.aeskey = cipher.decrypt(eaeskey)
 
-        cipher = AES.new(self.aeskey)
+        cipher = AES.new(self.aeskey, AES.MODE_CFB, self.iv)
         packet = cipher.decrypt(enc)
         
-        self.inner_size = struct.unpack('>I', packet[:4])
+        self.inner_size, = struct.unpack('>I', packet[:4])
 
         if self.inner_size > len(packet)-4:
             raise IOError('Invalid packet size')
@@ -127,13 +130,15 @@ class WritePacket:
 
         packet = struct.pack('>I', len(data)) + data + sig
         
-        aeskey = getrandbits(192)
+        aeskey = Random.new().read(24)
 
         cipher = PKCS1_OAEP.new(enckey)
-        header = cipher.encrypt(bytes(str(aeskey),"ascii"))
+        header = cipher.encrypt(aeskey)
 
-        cipher = AES.new(aeskey) #using ECB
+        iv = Random.new().read(AES.block_size)
+
+        cipher = AES.new(aeskey, AES.MODE_CFB, iv)
         body = cipher.encrypt(packet)
 
-        return struct.pack('>I', len(cipher)+len(body))+cipher+body
+        return struct.pack('>I', len(header)+len(body))+iv+header+body
 
