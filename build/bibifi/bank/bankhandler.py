@@ -35,6 +35,9 @@ class BankHandler:
         self.impl = Bank()
         self.account_locks = defaultdict(deque)
 
+    def request(self, request):
+        self.requests.put(request)
+
     def handle(self, request):
         name = request.data[0]
         lock_deque = self.account_locks[name]

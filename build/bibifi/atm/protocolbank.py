@@ -14,8 +14,8 @@ class ProtocolBank(BaseBank):
 
     def process_request(self, handler, *args):
         s = handler.send_req(*args)
-        self.sock.sendall(s.finish(self.keys.atm))
-        r = read_packet(self.sock)
+        self.sock.sendall(s.finish(self.keys.bank))
+        r = read_packet(self.sock, self.keys.atm)
         r.verify_or_raise(self.keys.bank)
         r.read_number(1)
         return handler.recv_res(s, r)

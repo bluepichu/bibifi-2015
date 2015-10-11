@@ -1,9 +1,14 @@
 import struct
 from Crypto.Hash import SHA512
-from Crypto.Signature import PKCS1_PSS
+from Crypto.Cipher import PKCS1_OAEP, AES
+from Crypto import Random
 from bibifi.currency import Currency
 
-def read_packet(sock):
+aes_key_size = 24
+aes_block_size = AES.block_size
+magic = b'cdb2'
+
+def read_packet(sock, key):
     data = bytearray(4096)
     data_view = memoryview(data)
     count = 0
@@ -18,17 +23,28 @@ def read_packet(sock):
         read_count = sock.recv_into(data_view[count:])
         if read_count == 0: raise IOError('Peer disconnected')
         count += read_count
-    return ReadPacket(bytes(data_view[:count]))
+    return ReadPacket(bytes(data_view[:count]), key)
 
 class ReadPacket:
-    def __init__(self, data):
-        if len(data) < 8:
+    def __init__(self, data, key):
+        if len(data) < 8 + aes_block_size:
             raise IOError('Packet too small')
-        self.outer_size, self.inner_size = struct.unpack('>II', data[:8])
-        if self.inner_size > len(data)-8 or self.outer_size != len(data):
-            raise IOError('Invalid packet size')
-        self.data = data[8:self.inner_size+8]
-        self.signature = data[self.inner_size+8:]
+        self.outer_size, encsize = struct.unpack('>II', data[:8])
+        enc = data[8:][:encsize]
+        iv = data[8+encsize:][:aes_block_size]
+        eaeskey = data[8+encsize+aes_block_size:]
+
+        rsa = PKCS1_OAEP.new(key)
+        aeskey = rsa.decrypt(eaeskey)
+
+        aes = AES.new(aeskey, AES.MODE_CFB, iv)
+        plain = aes.decrypt(enc)
+
+        if plain[:len(magic)] != magic:
+            raise IOError('Decryption failed')
+
+        self.data = plain[len(magic):]
+        self.inner_size = len(self.data)
         self.ptr = 0
 
     def read(self, count):
@@ -66,14 +82,7 @@ class ReadPacket:
             raise IOError('Packet too large')
 
     def verify_or_raise(self, key):
-        h = SHA512.new()
-        h.update(self.data)
-        signer = PKCS1_PSS.new(key)
-        try:
-            if not signer.verify(h, self.signature):
-                raise IOError('Invalid packet signature')
-        except ValueError:
-            raise IOError('Invalid packet signature')
+        pass
 
 class WritePacket:
     def __init__(self):
@@ -106,9 +115,15 @@ class WritePacket:
     def finish(self, key):
         data = self.get_data()
 
-        h = SHA512.new()
-        h.update(data)
-        signer = PKCS1_PSS.new(key)
-        sig = signer.sign(h)
+        rand = Random.new()
 
-        return struct.pack('>II', len(data)+len(sig)+8, len(data)) + data + sig
+        aeskey = rand.read(aes_key_size)
+        iv = rand.read(aes_block_size)
+        aes = AES.new(aeskey, AES.MODE_CFB, iv)
+        rsa = PKCS1_OAEP.new(key)
+
+        eaeskey = rsa.encrypt(aeskey)
+        message = aes.encrypt(magic + data)
+
+        sizes = struct.pack('>II', len(message) + len(iv) + len(eaeskey) + 8, len(message))
+        return sizes + message + iv + eaeskey
