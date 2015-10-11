@@ -1,5 +1,6 @@
 import struct
 from Crypto.Hash import SHA512
+from Crypto.Random import randbits
 from Crypto.Signature import PKCS1_PSS
 from bibifi.currency import Currency
 
@@ -111,4 +112,14 @@ class WritePacket:
         signer = PKCS1_PSS.new(key)
         sig = signer.sign(h)
 
-        return struct.pack('>II', len(data)+len(sig)+8, len(data)) + data + sig
+        packet = struct.pack('>II', len(data)+len(sig)+8, len(data)) + data + sig
+        
+        aeskey = randbits(192)
+        cipher = PKCS1_OAEP.new(key)
+        header = cipher.encrypt(aeskey)
+
+        cipher = AES.new(aeskey) #using ECB
+        body = cipher.encrypt(packet)
+
+        return cipher+body
+
