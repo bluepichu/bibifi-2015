@@ -8,7 +8,7 @@ import traceback
 
 def main():
     parser = argparser.ThrowingArgumentParser()
-    parser.add_argument('-p', metavar='<port>', type=int, help='The port to listen on', default=3000)
+    parser.add_argument('-p', metavar='<port>', type=str, help='The port to listen on', default="3000")
     parser.add_argument("-s", metavar="<auth-file>", type=str, help="The auth file path.  (Default: bank.auth)", default="bank.auth")
     
     try:
@@ -30,7 +30,7 @@ def start_server(port, auth_file_path):
     auth_keys = Keys.random()
     auth_keys.export_auth_file(auth_file_path)
 
-    term_socket = banksocket.listen('0.0.0.0', port, handler, auth_keys)
+    term_socket = banksocket.listen('0.0.0.0', int(port), handler, auth_keys)
 
     def sigterm_hook(signum, stack_frame):
         nonlocal term_socket, term_handler

@@ -22,24 +22,24 @@ def test_ip_validation(succeed, inp):
     assert bool(validate_ip(inp)) == succeed
 
 @pytest.mark.parametrize("succeed,inp", [
-    (True, 1024),
-    (True, 2048),
-    (True, 12345),
-    (True, 65535),
-    (True, 9876),
-    (True, 4325),
-    (True, 11111),
-    (True, 8080),
-    (True, 1337),
-    (False, 0),
-    (False, 1023),
-    (False, 80),
-    (False, 65536),
-    (False, 111111),
-    (False, -123),
-    (False, 22),
-    (False, 23),
-    (False, 4294967295)
+    (True, "1024"),
+    (True, "2048"),
+    (True, "12345"),
+    (True, "65535"),
+    (True, "9876"),
+    (True, "4325"),
+    (True, "11111"),
+    (True, "8080"),
+    (True, "1337"),
+    (False, "0"),
+    (False, "1023"),
+    (False, "80"),
+    (False, "65536"),
+    (False, "111111"),
+    (False, "-123"),
+    (False, "22"),
+    (False, "23"),
+    (False, "4294967295")
 ])
 def test_port_validation(succeed, inp):
     assert bool(validate_port(inp)) == succeed
