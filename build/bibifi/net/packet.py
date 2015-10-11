@@ -1,10 +1,11 @@
 import struct
 from Crypto.Hash import SHA512
+from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Random import randbits
 from Crypto.Signature import PKCS1_PSS
 from bibifi.currency import Currency
 
-def read_packet(sock):
+def read_packet(sock, pem):
     data = bytearray(4096)
     data_view = memoryview(data)
     count = 0
@@ -19,17 +20,29 @@ def read_packet(sock):
         read_count = sock.recv_into(data_view[count:])
         if read_count == 0: raise IOError('Peer disconnected')
         count += read_count
-    return ReadPacket(bytes(data_view[:count]))
+    return ReadPacket(bytes(data_view[:count]), pem)
 
 class ReadPacket:
-    def __init__(self, data):
-        if len(data) < 8:
+    def __init__(self, data, pem):
+        self.pem = pem
+        if len(data) < 268:
             raise IOError('Packet too small')
-        self.outer_size, self.inner_size = struct.unpack('>II', data[:8])
-        if self.inner_size > len(data)-8 or self.outer_size != len(data):
+        self.outer_size = struct.unpack('>I', data[:4])
+
+        eaeskey = data[4:260]
+        enc = data[260:]
+        cipher = PKCS1_OAEP.new(pem)
+        self.aeskey = cipher.decrypt(eaeskey)
+
+        cipher = AES.new(self.aeskey)
+        packet = cipher.decrypt(enc)
+        
+        self.inner_size = struct.unpack('>I', packet[:4])
+
+        if self.inner_size > len(packet)-4:
             raise IOError('Invalid packet size')
-        self.data = data[8:self.inner_size+8]
-        self.signature = data[self.inner_size+8:]
+        self.data = packet[4:self.inner_size+4]
+        self.signature = packet[self.inner_size+4:]
         self.ptr = 0
 
     def read(self, count):
@@ -112,7 +125,7 @@ class WritePacket:
         signer = PKCS1_PSS.new(key)
         sig = signer.sign(h)
 
-        packet = struct.pack('>II', len(data)+len(sig)+8, len(data)) + data + sig
+        packet = struct.pack('>I', len(data)) + data + sig
         
         aeskey = randbits(192)
         cipher = PKCS1_OAEP.new(key)
@@ -121,5 +134,5 @@ class WritePacket:
         cipher = AES.new(aeskey) #using ECB
         body = cipher.encrypt(packet)
 
-        return cipher+body
+        return struct.pack('>I', len(cipher)+len(body))+cipher+body
 
