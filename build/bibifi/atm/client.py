@@ -11,7 +11,7 @@ import os
 import traceback
 
 failure_hooks = []
-failure_trace = False
+failure_trace = True
 
 def main():    
     try:

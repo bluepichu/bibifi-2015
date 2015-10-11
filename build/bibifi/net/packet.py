@@ -1,7 +1,7 @@
 import struct
 from Crypto.Hash import SHA512
 from Crypto.Cipher import PKCS1_OAEP, AES
-from Crypto.Random import randbits
+from Crypto.Random.random import getrandbits
 from Crypto.Signature import PKCS1_PSS
 from bibifi.currency import Currency
 
@@ -32,7 +32,7 @@ class ReadPacket:
         eaeskey = data[4:260]
         enc = data[260:]
         cipher = PKCS1_OAEP.new(pem)
-        self.aeskey = cipher.decrypt(eaeskey)
+        self.aeskey = int(cipher.decrypt(eaeskey))
 
         cipher = AES.new(self.aeskey)
         packet = cipher.decrypt(enc)
@@ -117,19 +117,20 @@ class WritePacket:
     def get_data(self):
         return b''.join(self.data_create)
 
-    def finish(self, key):
+    def finish(self, signkey, enckey):
         data = self.get_data()
 
         h = SHA512.new()
         h.update(data)
-        signer = PKCS1_PSS.new(key)
+        signer = PKCS1_PSS.new(signkey)
         sig = signer.sign(h)
 
         packet = struct.pack('>I', len(data)) + data + sig
         
-        aeskey = randbits(192)
-        cipher = PKCS1_OAEP.new(key)
-        header = cipher.encrypt(aeskey)
+        aeskey = getrandbits(192)
+
+        cipher = PKCS1_OAEP.new(enckey)
+        header = cipher.encrypt(bytes(str(aeskey),"ascii"))
 
         cipher = AES.new(aeskey) #using ECB
         body = cipher.encrypt(packet)

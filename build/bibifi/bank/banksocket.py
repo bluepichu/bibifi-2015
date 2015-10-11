@@ -31,7 +31,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
         self.handler.requests.put(BankRequest(self, type, data, stage))
 
     def read_packet(self):
-        return read_packet(self.request)
+        return read_packet(self.request, self.auth_keys.bank)
 
     def get_method(self, req_packet):
         packet_type = req_packet.read_number(1)
@@ -49,7 +49,7 @@ class ThreadedHandler(socketserver.BaseRequestHandler):
         return self.result_queue.get()
 
     def send_packet(self, res_packet):
-        self.request.sendall(res_packet.finish(self.auth_keys.bank))
+        self.request.sendall(res_packet.finish(self.auth_keys.bank, self.auth_keys.atm))
 
     def handle(self):
         self.request.settimeout(10)
