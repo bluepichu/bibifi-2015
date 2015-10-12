@@ -5,14 +5,14 @@ all: bank atm
 
 bank: $(bibifilib) main_bank.py
 	cp main_$@.py __main__.py
-	zip $@.zip __main__.py $(bibifilib)
+	zip -0 $@.zip __main__.py $(bibifilib)
 	echo '#!/usr/bin/env python3' | cat - $@.zip > $@
 	chmod +x $@
 	rm -f __main__.py $@.zip
 
 atm: $(bibifilib) main_atm.py
 	cp main_$@.py __main__.py
-	zip $@.zip __main__.py $(bibifilib)
+	zip -0 $@.zip __main__.py $(bibifilib)
 	echo '#!/usr/bin/env python3' | cat - $@.zip > $@
 	chmod +x $@
 	rm -f __main__.py $@.zip
