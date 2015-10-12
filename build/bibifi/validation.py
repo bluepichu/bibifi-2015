@@ -3,7 +3,6 @@ import os
 
 valid_characters = re.compile(r'^[_\-\.0-9a-z]*$')
 ip_regex = re.compile(r'^(\d|[1-9]\d|1\d\d|2([01234]\d|5[012345]))\.(\d|[1-9]\d|1\d\d|2([01234]\d|5[012345]))\.(\d|[1-9]\d|1\d\d|2([01234]\d|5[012345]))\.(\d|[1-9]\d|1\d\d|2([01234]\d|5[012345]))$')
-port_regex = re.compile(r'^[1-9]\d*$')
 invalid_files = {".", ".."}
 
 def validate_currency(c, overflow=False):
@@ -28,7 +27,7 @@ def validate_ip(ip):
     return bool(ip_regex.match(ip))
 
 def validate_port(port):
-    return 1024 <= int(port) <= 65535 and bool(port_regex.match(port))
+    return 1024 <= port <= 65535
 
 def validate_name(name):
     return 1 <= len(name) <= 250 and valid_characters.match(name)
