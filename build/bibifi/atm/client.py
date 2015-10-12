@@ -1,10 +1,11 @@
 from bibifi.atm.protocolbank import ProtocolBank
 from bibifi import argparser, validation
 
+from bibifi.argparser import ParseString, ParseNumber, ParseCurrency, StoreTrue
+
 from Crypto.Random import random
 from bibifi.net.packet import WritePacket
 from bibifi.authfile import Keys
-from bibifi.currency import Currency
 
 import sys
 import os
@@ -41,18 +42,18 @@ def handle_failure():
 
 def run_parser(args):
     parser = argparser.ThrowingArgumentParser(description="Process atm input.")
-    parser.add_argument("-s", metavar="<auth-file>", type=str, help="The bank's auth file.  (Default: bank.auth)", default="bank.auth")
-    parser.add_argument("-i", metavar="<ip-address>", type=str, help="The bank's IP address.", default="127.0.0.1")
-    parser.add_argument("-p", metavar="<port>", type=int, help="The bank's port.", default=3000)
-    parser.add_argument("-c", metavar="<card-file>", type=str, help="The cardfile for the account.")
-    parser.add_argument("-a", metavar="<account>", type=str, help="The account on which to operate", required=True)
+    parser.add_argument("-s", metavar="<auth-file>", action=ParseString, help="The bank's auth file.  (Default: bank.auth)", default="bank.auth")
+    parser.add_argument("-i", metavar="<ip-address>", action=ParseString, help="The bank's IP address.", default="127.0.0.1")
+    parser.add_argument("-p", metavar="<port>", action=ParseNumber, help="The bank's port.", default=3000)
+    parser.add_argument("-c", metavar="<card-file>", action=ParseString, help="The cardfile for the account.")
+    parser.add_argument("-a", metavar="<account>", action=ParseString, help="The account on which to operate", required=True)
     
     actions = parser.add_mutually_exclusive_group(required=True)
 
-    actions.add_argument("-n", metavar="<balance>", type=str, help="Creates a new account with the given inital balance.")
-    actions.add_argument("-d", metavar="<amount", help="Deposits the given amount into an account.")
-    actions.add_argument("-w", metavar="<amount>", type=str, help="Withdraws the given amount from an account.")
-    actions.add_argument("-g", action="count", help="Gets the balance of an account.")
+    actions.add_argument("-n", metavar="<balance>", action=ParseCurrency, help="Creates a new account with the given inital balance.")
+    actions.add_argument("-d", metavar="<amount", action=ParseCurrency, help="Deposits the given amount into an account.")
+    actions.add_argument("-w", metavar="<amount>", action=ParseCurrency, help="Withdraws the given amount from an account.")
+    actions.add_argument("-g", action=StoreTrue, help="Gets the balance of an account.")
 
     args = parser.parse_args(args)
     if not args.c: args.c = args.a + '.card'
@@ -81,21 +82,21 @@ def get_method(args, auth_keys):
     method_name = None
 
     if args.n:
-        amount = Currency.parse(args.n)
+        amount = args.n
         card = load_card_file(args.c, create=True)
         if not amount or amount.dollars < 10:
             raise Exception('Invalid amount')
 
         method_name = 'create_account'
     elif args.d:
-        amount = Currency.parse(args.d)
+        amount = args.d
         card = load_card_file(args.c)
         if not amount or (amount.dollars == 0 and amount.cents == 0) or not amount.validate(overflow=True):
             raise Exception('Invalid amount')
 
         method_name = 'deposit'
     elif args.w:
-        amount = Currency.parse(args.w)
+        amount = args.w
         card = load_card_file(args.c)
         if not amount or (amount.dollars == 0 and amount.cents == 0) or not amount.validate(overflow=True):
             raise Exception('Invalid amount')
