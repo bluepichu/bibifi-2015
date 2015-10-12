@@ -43,7 +43,7 @@ def run_parser(args):
     parser = argparser.ThrowingArgumentParser(description="Process atm input.")
     parser.add_argument("-s", metavar="<auth-file>", type=str, help="The bank's auth file.  (Default: bank.auth)", default="bank.auth")
     parser.add_argument("-i", metavar="<ip-address>", type=str, help="The bank's IP address.", default="127.0.0.1")
-    parser.add_argument("-p", metavar="<port>", type=int, help="The bank's port.", default=3000)
+    parser.add_argument("-p", metavar="<port>", type=str, help="The bank's port.", default="3000")
     parser.add_argument("-c", metavar="<card-file>", type=str, help="The cardfile for the account.")
     parser.add_argument("-a", metavar="<account>", type=str, help="The account on which to operate", required=True)
     
@@ -113,7 +113,7 @@ def get_method(args, auth_keys):
 
     name = args.a
 
-    bank = ProtocolBank(args.i, args.p, auth_keys)
+    bank = ProtocolBank(args.i, int(args.p), auth_keys)
     method = getattr(bank, method_name)
 
     if amount:
