@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 
-from .util import generate_nonce
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Hash import SHA512, SHA
 from bibifi.validation import validate_name, validate_file, validate_currency
@@ -13,25 +12,10 @@ class ProtocolMethod(metaclass=ABCMeta):
         return p
 
     def generate_digest(self, s, r):
-        nonce = generate_nonce()
-
-        hasher = SHA.new()
-        hasher.update(nonce)
-        hasher.update(s.get_data())
-
-        r.write_bytes(nonce)
-        r.write_bytes(hasher.digest())
+        pass
 
     def validate_digest(self, s, r):
-        nonce = r.read_bytes()
-        digest = r.read_bytes()
-
-        hasher = SHA.new()
-        hasher.update(nonce)
-        hasher.update(s.get_data())
-
-        if hasher.digest() != digest:
-            raise IOError('Invalid response digest')
+        pass
 
     @abstractmethod
     def send_req(self, *args):
