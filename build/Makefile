@@ -4,18 +4,12 @@ bibifilib = $(shell find bibifi -type f -iname '*.py')
 all: bank atm
 
 bank: $(bibifilib) main_bank.py
-	cp main_$@.py __main__.py
-	zip -0 $@.zip __main__.py $(bibifilib)
-	echo '#!/usr/bin/env python3' | cat - $@.zip > $@
-	chmod +x $@
-	rm -f __main__.py $@.zip
+	pyinstaller main_bank.py --onefile
+	mv dist/main_bank bank
 
 atm: $(bibifilib) main_atm.py
-	cp main_$@.py __main__.py
-	zip -0 $@.zip __main__.py $(bibifilib)
-	echo '#!/usr/bin/env python3' | cat - $@.zip > $@
-	chmod +x $@
-	rm -f __main__.py $@.zip
+	pyinstaller main_atm.py --onefile
+	mv dist/main_atm atm
 
 test:
 	python3 -m pytest
@@ -25,5 +19,6 @@ clean:
 	rm -f atm bank
 	rm -f *.zip
 	rm -f __main__.py
+	rm -rf dist
 
 .PHONY: all test clean
