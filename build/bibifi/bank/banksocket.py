@@ -103,4 +103,3 @@ def listen(host, port, bank_handler, auth_keys):
         server.server_close()
 
     return handle_terminate
-
