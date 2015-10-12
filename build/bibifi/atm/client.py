@@ -26,10 +26,10 @@ def main():
         run_method(method)
     except IOError as e:
         handle_failure()
-        exit(63)
+        sys.exit(63)
     except Exception as e:
         handle_failure()
-        exit(255)
+        sys.exit(255)
 
 def handle_failure():
     if failure_trace: traceback.print_exc(file=sys.stderr)

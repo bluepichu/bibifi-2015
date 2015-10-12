@@ -15,24 +15,24 @@ class Keys:
     @classmethod
     def load_from_file(cls, auth_file_path):
         if not os.path.isfile(auth_file_path):
-            exit(255)
+            sys.exit(255)
         try:
             with open(auth_file_path, 'rb') as auth_file:
                 keys = auth_file.read().split(b'|')
                 if len(keys) != 2:
                     print('Invalid number of keys', file=sys.stderr)
-                    exit(255)
+                    sys.exit(255)
                 atm = RSA.importKey(keys[0])
                 bank = RSA.importKey(keys[1])
                 return cls(atm_key=atm, bank_key=bank)
         except Exception as e:
             print('Failed to import keys: ' + str(e), file=sys.stderr)
-            exit(255)
+            sys.exit(255)
 
     def export_auth_file(self, auth_file_path):
         if os.path.exists(auth_file_path):
             print('Auth file already exists', file=sys.stderr)
-            exit(255)
+            sys.exit(255)
         with open(auth_file_path, 'wb') as auth_file:
             auth_file.write(self.atm.exportKey())
             auth_file.write(b'|')
