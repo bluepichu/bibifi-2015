@@ -1,21 +1,16 @@
+ROOT_DIR = $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 bibifilib = $(shell find bibifi -type f -iname '*.py')
 
 all: bank atm
 
 bank: $(bibifilib) main_bank.py
-	cp main_$@.py __main__.py
-	zip -0 $@.zip __main__.py $(bibifilib)
-	echo '#!/usr/bin/env python3' | cat - $@.zip > $@
+	sed "s:XXX:$(ROOT_DIR):" < main_$@.py > $@
 	chmod +x $@
-	rm -f __main__.py $@.zip
 
 atm: $(bibifilib) main_atm.py
-	cp main_$@.py __main__.py
-	zip -0 $@.zip __main__.py $(bibifilib)
-	echo '#!/usr/bin/env python3' | cat - $@.zip > $@
+	sed "s:XXX:$(ROOT_DIR):" < main_$@.py > $@
 	chmod +x $@
-	rm -f __main__.py $@.zip
 
 test:
 	python3 -m pytest
